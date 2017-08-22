@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Getting Started</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/dist/assets/css/reset.css">
+    <link rel="stylesheet" href="/dist/assets/css/main.css">
+  </head>
+<body>
+  <main aria="main">
+    <button class="menu-show">show menu</button>
+    <aside class="map-nav">
+      <!-- element that holds the locations and filtering -->
+      <header class="map-filters">
+        <button class="menu-hide">hide menu</button>
+        <input type="text" value="search locations" class="search">
+
+        <h2 class="filters-header">Filters</h2>
+
+        <button class="filter">
+          <div class="img-wrapper">
+            <img src="/dist/assets/icons/hotel-building.svg" alt="hotel">
+          </div>
+          <label for="hotel">
+            Hotel
+          </label>
+          <input type="checkbox" value="hotel" id="hotel">
+        </button>
+
+        <button class="filter">
+          <div class="img-wrapper">
+            <img src="/dist/assets/icons/beach.svg" alt="beach">
+          </div>
+          <label for="beach">
+            Beach
+          </label>
+          <input type="checkbox" value="beach" id="beach">
+        </button>
+
+        <button class="filter">
+          <div class="img-wrapper">
+            <img src="/dist/assets/icons/gym.svg" alt="gym">
+          </div>
+          <label for="gym">
+            Gym
+          </label>
+          <input type="checkbox" value="gym" id="gym">
+        </button>
+
+        <button class="filter">
+          <div class="img-wrapper">
+            <img src="/dist/assets/icons/castle.svg" alt="Culture">
+          </div>
+          <label for="cultural">
+            Monument
+          </label>
+          <input type="checkbox" value="cultural" id="cultural">
+        </button>
+
+        <button class="filter">
+          <div class="img-wrapper">
+            <img src="/dist/assets/icons/lunch.svg" alt="restaurant">
+          </div>
+          <label for="restaurants">
+            Restaurant
+          </label>
+          <input type="checkbox" value="restaurants" id="restaurants">
+        </button>
+      </header>
+
+      <nav class="map-locations">
+        <header><h1>Places to go</h1></header>
+        <ul class="locations" data-bind="foreach: favorites">
+          <li data-bind="text: lat, lng"></li>
+        </ul>
+        <ul class="locations">
+          <li class="restaurant"><span class="title">Pizza A L'italienne بيتزا الذوق الرفيع</span></li>
+          <li class="gym"><span class="title">Salle de sport Maison des Jeunes Midoun</span></li>
+          <li class="beach"><span class="title">Essaguia beach</span></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <section class="map">
+      <div id="map">
+
+      </div>
+    </section>
+  </main>
+
+  <script type="text/javascript"
+   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9cUZngQY2Lo2IarFmTRROr5FznHuJfZ8">
+  </script>
+  <script src="/dist/bundle.js"></script>
+</body>
+</html>
