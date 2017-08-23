@@ -156,6 +156,16 @@ h2 {
   left: 0;
   top: 12px;
 }
+.locations .culture:before {
+  content: '';
+  background-image: url('/dist/assets/icons/castle.svg');
+  background-size: 24px 24px;
+  width: 24px;
+  height: 24px;
+  position: absolute;
+  left: 0;
+  top: 12px;
+}
 
 
 /* Map section */
@@ -166,6 +176,7 @@ h2 {
   left: 0;
   top: 0;
   z-index: 1;
+  overflow: hidden;
 }
 #map {
   position: initial !important;
