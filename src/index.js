@@ -1,8 +1,10 @@
 import ko from "knockout";
 
-import {markerVM} from "./viewmodels";
-import {initMap} from "./map";
+import {InitMapVM, MarkerVM} from "./viewmodels";
 
-let map = initMap();
+var VMs = {
+  mapVM: new InitMapVM(),
+  markerVM: new MarkerVM()
+};
 
-ko.applyBindings(new markerVM());
+ko.applyBindings(VMs);

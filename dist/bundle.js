@@ -5902,13 +5902,14 @@ var _knockout2 = _interopRequireDefault(_knockout);
 
 var _viewmodels = __webpack_require__(2);
 
-var _map = __webpack_require__(4);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var map = (0, _map.initMap)();
+var VMs = {
+  mapVM: new _viewmodels.InitMapVM(),
+  markerVM: new _viewmodels.MarkerVM()
+};
 
-_knockout2.default.applyBindings(new _viewmodels.markerVM());
+_knockout2.default.applyBindings(VMs);
 
 /***/ }),
 /* 2 */
@@ -5925,20 +5926,47 @@ var _models = __webpack_require__(3);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function markerVM() {
-  this.favorites = _models.favorites;
+var InitMapVM = function InitMapVM() {
+  var midoun = { lat: 33.807279, lng: 10.991097 };
 
-  this.favorites.forEach(function (coords) {
-    var latLng = new google.maps.LatLng(coords[1], coords[0]);
-    console.log('adding coords');
+  var map = new google.maps.Map(document.getElementById('map'), {
+    zoom: 12,
+    center: midoun,
+    mapTypeId: 'satellite',
+    mapTypeControlOptions: {
+      style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+      position: google.maps.ControlPosition.TOP_CENTER
+    }
+  });
+
+  // set the map model.
+  (0, _models.gmap)(map);
+};
+
+var MarkerVM = function MarkerVM() {
+  this.favorites = _knockout2.default.observableArray(_models.favorites);
+
+  this.favorites().forEach(function (coords) {
+    var latLng = new google.maps.LatLng(coords.lat, coords.lng);
     var marker = new google.maps.Marker({
       position: latLng
-    }).setMap(map);
+    });
+    marker.setMap((0, _models.gmap)());
+    marker.addListener('click', toggleBounce);
   });
+};
+
+function toggleBounce() {
+  if (this.getAnimation() !== null) {
+    this.setAnimation(null);
+  } else {
+    this.setAnimation(google.maps.Animation.BOUNCE);
+  }
 }
 
 module.exports = {
-  markerVM: markerVM
+  InitMapVM: InitMapVM,
+  MarkerVM: MarkerVM
 };
 
 /***/ }),
@@ -5954,34 +5982,13 @@ var _knockout2 = _interopRequireDefault(_knockout);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var favorites = [{ lat: 33.808605, lng: 10.990073 }, { lat: 33.787294, lng: 11.057749 }, { lat: 33.804022, lng: 10.991228 }, { lat: 33.884045, lng: 10.860582 }, { lat: 33.724269, lng: 10.975052 }];
+var gmap = _knockout2.default.observable();
+
+var favorites = [{ lat: 33.808605, lng: 10.990073, title: 'Pizza A L\'italienne بيتزا الذوق الرفيع', type: 'restaurant' }, { lat: 33.787294, lng: 11.057749, title: 'Salle de sport Maison des Jeunes Midoun', type: 'gym' }, { lat: 33.804022, lng: 10.991228, title: 'Essaguia beach', type: 'beach' }, { lat: 33.886705, lng: 10.857537, title: 'Marina Djerba', type: 'beach' }, { lat: 33.724279, lng: 10.975052, title: 'Ras el Kastil (Kastil stronghold)', type: 'culture' }, { lat: 33.732550, lng: 10.865716, title: 'Guellala Museum', type: 'culture' }];
 
 module.exports = {
+  gmap: gmap,
   favorites: favorites
-};
-
-/***/ }),
-/* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var initMap = function initMap() {
-  var midoun = { lat: 33.807279, lng: 10.991097 };
-  var map = new google.maps.Map(document.getElementById('map'), {
-    zoom: 18,
-    center: midoun
-  });
-  var marker = new google.maps.Marker({
-    position: midoun,
-    map: map
-  });
-  return map;
-};
-
-module.exports = {
-  initMap: initMap
 };
 
 /***/ })

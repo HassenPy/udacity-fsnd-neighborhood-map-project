@@ -13,7 +13,7 @@
       <!-- element that holds the locations and filtering -->
       <header class="map-filters">
         <button class="menu-hide">hide menu</button>
-        <input type="text" value="search locations" class="search">
+        <input type="text" value="search locations" class="search" id="search">
 
         <h2 class="filters-header">Filters</h2>
 
@@ -70,13 +70,8 @@
 
       <nav class="map-locations">
         <header><h1>Places to go</h1></header>
-        <ul class="locations" data-bind="foreach: favorites">
-          <li data-bind="text: lat, lng"></li>
-        </ul>
-        <ul class="locations">
-          <li class="restaurant"><span class="title">Pizza A L'italienne بيتزا الذوق الرفيع</span></li>
-          <li class="gym"><span class="title">Salle de sport Maison des Jeunes Midoun</span></li>
-          <li class="beach"><span class="title">Essaguia beach</span></li>
+        <ul class="locations" data-bind="foreach: markerVM.favorites">
+          <li data-bind="css: type"><span data-bind="text: title" class="title"></span></li>
         </ul>
       </nav>
     </aside>
@@ -89,7 +84,7 @@
   </main>
 
   <script type="text/javascript"
-   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9cUZngQY2Lo2IarFmTRROr5FznHuJfZ8">
+   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9cUZngQY2Lo2IarFmTRROr5FznHuJfZ8&libraries=places">
   </script>
   <script src="/dist/bundle.js"></script>
 </body>
