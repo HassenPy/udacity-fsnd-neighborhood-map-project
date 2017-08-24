@@ -41,8 +41,7 @@ h2 {
 /* map navigation styles */
 .map-nav {
   position: fixed;
-  max-width: 500px;
-  min-width: 200px;
+  width: 450px;
   height: 100%;
   min-height: 600px;
   background: #FFF;
@@ -82,9 +81,10 @@ h2 {
   cursor: pointer;
   float: left;
 }
-.filter:focus,
-.filter:active {
+
+.filter.active {
   background: #fff;
+  outline: 1px solid #333;
 }
 .img-wrapper {
   width: 100%;
@@ -136,16 +136,6 @@ h2 {
   left: 0;
   top: 12px;
 }
-.locations .gym:before {
-  content: '';
-  background-image: url('/dist/assets/icons/gym.svg');
-  background-size: 24px 24px;
-  width: 24px;
-  height: 24px;
-  position: absolute;
-  left: 0;
-  top: 12px;
-}
 .locations .beach:before {
   content: '';
   background-image: url('/dist/assets/icons/beach.svg');
@@ -156,9 +146,9 @@ h2 {
   left: 0;
   top: 12px;
 }
-.locations .culture:before {
+.locations .museum:before {
   content: '';
-  background-image: url('/dist/assets/icons/castle.svg');
+  background-image: url('/dist/assets/icons/museum.png');
   background-size: 24px 24px;
   width: 24px;
   height: 24px;
@@ -166,6 +156,17 @@ h2 {
   left: 0;
   top: 12px;
 }
+.locations .monument:before {
+  content: '';
+  background-image: url('/dist/assets/icons/monument.png');
+  background-size: 24px 24px;
+  width: 24px;
+  height: 24px;
+  position: absolute;
+  left: 0;
+  top: 12px;
+}
+
 
 
 /* Map section */

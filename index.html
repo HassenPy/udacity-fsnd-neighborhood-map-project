@@ -13,65 +13,26 @@
       <!-- element that holds the locations and filtering -->
       <header class="map-filters">
         <button class="menu-hide">hide menu</button>
-        <input type="text" value="search locations" class="search" id="search">
+        <input type="text" data-bind="value: searchTerm, valueUpdate: 'afterkeydown'" value="search locations" class="search" id="search">
 
         <h2 class="filters-header">Filters</h2>
 
-        <button class="filter">
-          <div class="img-wrapper">
-            <img src="/dist/assets/icons/hotel-building.svg" alt="hotel">
-          </div>
-          <label for="hotel">
-            Hotel
-          </label>
-          <input type="checkbox" value="hotel" id="hotel">
-        </button>
+        <div data-bind="foreach: filters">
+          <button class="filter" data-bind="click: $parent.toggleFilter, css: {active: $parent.isActive(text)}">
+            <div class="img-wrapper">
+              <img data-bind="attr: {src: icon, alt: text}">
+            </div>
+            <label data-bind="attr: {for: text}, text: text"></label>
+            <input type="checkbox" data-bind="attr: {id: text, value: text}">
+          </button>
+        </div>
 
-        <button class="filter">
-          <div class="img-wrapper">
-            <img src="/dist/assets/icons/beach.svg" alt="beach">
-          </div>
-          <label for="beach">
-            Beach
-          </label>
-          <input type="checkbox" value="beach" id="beach">
-        </button>
-
-        <button class="filter">
-          <div class="img-wrapper">
-            <img src="/dist/assets/icons/gym.svg" alt="gym">
-          </div>
-          <label for="gym">
-            Gym
-          </label>
-          <input type="checkbox" value="gym" id="gym">
-        </button>
-
-        <button class="filter">
-          <div class="img-wrapper">
-            <img src="/dist/assets/icons/castle.svg" alt="Culture">
-          </div>
-          <label for="cultural">
-            Monument
-          </label>
-          <input type="checkbox" value="cultural" id="cultural">
-        </button>
-
-        <button class="filter">
-          <div class="img-wrapper">
-            <img src="/dist/assets/icons/lunch.svg" alt="restaurant">
-          </div>
-          <label for="restaurants">
-            Restaurant
-          </label>
-          <input type="checkbox" value="restaurants" id="restaurants">
-        </button>
       </header>
 
       <nav class="map-locations">
         <header><h1>Places to go</h1></header>
-        <ul class="locations" data-bind="foreach: markerVM.favorites">
-          <li data-bind="css: type"><span data-bind="text: title" class="title"></span></li>
+        <ul class="locations" data-bind="foreach: activeLocations">
+          <li data-bind="css: filter"><span data-bind="text: title, click: $parent.showPlace" class="title"></span></li>
         </ul>
       </nav>
     </aside>

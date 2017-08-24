@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 1);
+/******/ 	return __webpack_require__(__webpack_require__.s = 4);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -5900,16 +5900,91 @@ var _knockout = __webpack_require__(0);
 
 var _knockout2 = _interopRequireDefault(_knockout);
 
-var _viewmodels = __webpack_require__(2);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var VMs = {
-  mapVM: new _viewmodels.InitMapVM(),
-  markerVM: new _viewmodels.MarkerVM()
+var icon_base = '/dist/assets/icons/';
+
+var gmap = {
+  map: null,
+  locations: [{
+    lat: 33.808605,
+    lng: 10.990073,
+    title: 'Pizza A L\'italienne بيتزا الذوق الرفيع',
+    type: 'restaurant',
+    filter: 'restaurant'
+  }, {
+    lat: 33.784321,
+    lng: 11.057903,
+    title: 'Essaguia beach',
+    type: 'point_of_interest',
+    filter: 'beach'
+  }, {
+    lat: 33.724279,
+    lng: 10.975052,
+    title: 'Ras el Kastil (Kastil stronghold)',
+    type: 'monument',
+    filter: 'monument'
+  }, {
+    lat: 33.879801,
+    lng: 10.862366,
+    title: 'Djerbian cultural heritage museum',
+    type: 'museum',
+    filter: 'museum'
+  }, {
+    lat: 33.880294,
+    lng: 10.856733,
+    title: 'Pappagallo italian restaurant',
+    type: 'restaurant',
+    filter: 'restaurant'
+  }, {
+    lat: 33.886705,
+    lng: 10.857537,
+    title: 'Marina Djerba',
+    type: 'point_of_interest',
+    filter: 'beach'
+  }, {
+    lat: 33.732550,
+    lng: 10.865716,
+    title: 'Guellala Museum',
+    type: 'museum',
+    filter: 'museum'
+  }, {
+    lat: 33.884048,
+    lng: 10.860582,
+    title: 'Ghazi Mustapha Tower',
+    type: 'Fortress',
+    filter: 'monument'
+  }, {
+    lat: 33.819763,
+    lng: 11.045033,
+    title: 'Lalla Hadria Museum',
+    type: 'museum',
+    filter: 'monument'
+  }]
 };
 
-_knockout2.default.applyBindings(VMs);
+var filters = [{
+  icon: icon_base + 'beach.svg',
+  text: 'beach',
+  types: ['beach']
+}, {
+  icon: icon_base + 'lunch.svg',
+  text: 'restaurant',
+  types: ['restaurant']
+}, {
+  icon: icon_base + 'monument.png',
+  text: 'monument',
+  types: ['Fortress', 'monument']
+}, {
+  icon: icon_base + 'museum.png',
+  text: 'museum',
+  types: ['museum', 'point_of_interest']
+}];
+
+module.exports = {
+  gmap: gmap,
+  filters: filters
+};
 
 /***/ }),
 /* 2 */
@@ -5918,18 +5993,14 @@ _knockout2.default.applyBindings(VMs);
 "use strict";
 
 
-var _knockout = __webpack_require__(0);
+var _models = __webpack_require__(1);
 
-var _knockout2 = _interopRequireDefault(_knockout);
+var _helpers = __webpack_require__(3);
 
-var _models = __webpack_require__(3);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var InitMapVM = function InitMapVM() {
+var InitMap = function InitMap() {
   var midoun = { lat: 33.807279, lng: 10.991097 };
 
-  var map = new google.maps.Map(document.getElementById('map'), {
+  _models.gmap.map = new google.maps.Map(document.getElementById('map'), {
     zoom: 12,
     center: midoun,
     mapTypeId: 'satellite',
@@ -5939,34 +6010,32 @@ var InitMapVM = function InitMapVM() {
     }
   });
 
-  // set the map model.
-  (0, _models.gmap)(map);
-};
-
-var MarkerVM = function MarkerVM() {
-  this.favorites = _knockout2.default.observableArray(_models.favorites);
-
-  this.favorites().forEach(function (coords) {
+  _models.gmap.locations.forEach(function (coords) {
     var latLng = new google.maps.LatLng(coords.lat, coords.lng);
     var marker = new google.maps.Marker({
       position: latLng
     });
-    marker.setMap((0, _models.gmap)());
-    marker.addListener('click', toggleBounce);
+    marker.setMap(_models.gmap.map);
+    marker.addListener('click', _helpers.toggleBounce);
   });
 };
 
-function toggleBounce() {
-  if (this.getAnimation() !== null) {
-    this.setAnimation(null);
-  } else {
-    this.setAnimation(google.maps.Animation.BOUNCE);
-  }
-}
+var getPlace = function getPlace(location) {
+  var coords = new google.maps.LatLng(location.lat, location.lng);
+  var service = new google.maps.places.PlacesService(_models.gmap.map);
+
+  service.nearbySearch({
+    location: coords,
+    radius: '1',
+    type: [location.type]
+  }, function (response) {
+    console.log(response);
+  });
+};
 
 module.exports = {
-  InitMapVM: InitMapVM,
-  MarkerVM: MarkerVM
+  InitMap: InitMap,
+  getPlace: getPlace
 };
 
 /***/ }),
@@ -5976,19 +6045,138 @@ module.exports = {
 "use strict";
 
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var toggleBounce = function toggleBounce() {
+  if (this.getAnimation() !== null) {
+    this.setAnimation(null);
+  } else {
+    this.setAnimation(google.maps.Animation.BOUNCE);
+  }
+};
+
+var toggleFilter = function toggleFilter(filter) {
+  return _extends({}, filter, { active: !filter.active });
+};
+
+var filterLocations = function filterLocations(locations, filters) {
+  if (filters.length == 0) return locations;
+
+  var newLocations = locations.filter(function (location) {
+    return filters.indexOf(location.filter) !== -1;
+  });
+  return newLocations;
+};
+
+var searchLocations = function searchLocations(locations, searchTerm) {
+  var newLocations = locations.filter(function (location) {
+    return location.title.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1;
+  });
+  return newLocations;
+};
+
+module.exports = {
+  toggleBounce: toggleBounce,
+  toggleFilter: toggleFilter,
+  filterLocations: filterLocations,
+  searchLocations: searchLocations
+};
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 var _knockout = __webpack_require__(0);
 
 var _knockout2 = _interopRequireDefault(_knockout);
 
+var _viewmodels = __webpack_require__(5);
+
+var _service = __webpack_require__(2);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var gmap = _knockout2.default.observable();
+(0, _service.InitMap)();
 
-var favorites = [{ lat: 33.808605, lng: 10.990073, title: 'Pizza A L\'italienne بيتزا الذوق الرفيع', type: 'restaurant' }, { lat: 33.787294, lng: 11.057749, title: 'Salle de sport Maison des Jeunes Midoun', type: 'gym' }, { lat: 33.804022, lng: 10.991228, title: 'Essaguia beach', type: 'beach' }, { lat: 33.886705, lng: 10.857537, title: 'Marina Djerba', type: 'beach' }, { lat: 33.724279, lng: 10.975052, title: 'Ras el Kastil (Kastil stronghold)', type: 'culture' }, { lat: 33.732550, lng: 10.865716, title: 'Guellala Museum', type: 'culture' }];
+_knockout2.default.options.useOnlyNativeEvents = true;
+_knockout2.default.applyBindings(new _viewmodels.LocationVM());
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _knockout = __webpack_require__(0);
+
+var _knockout2 = _interopRequireDefault(_knockout);
+
+var _models = __webpack_require__(1);
+
+var _service = __webpack_require__(2);
+
+var _helpers = __webpack_require__(3);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var LocationVM = function LocationVM() {
+  var self = this;
+
+  self.locations = _knockout2.default.observableArray(_models.gmap.locations);
+  self.activeLocations = _knockout2.default.observableArray(_models.gmap.locations);
+
+  // Adding an active state value to the filter, its only used by the view and VM.
+  self.filters = _knockout2.default.observableArray(
+  // ES7 object spread: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Operators/Spread_operator
+  _models.filters.map(function (filter) {
+    return _extends({}, filter, { active: false });
+  }));
+  self.activeFilters = _knockout2.default.observableArray();
+
+  self.searchTerm = _knockout2.default.observable('');
+
+  self.toggleFilter = function (filter) {
+    // Get the index of the clicked filter
+    var filterIndex = self.activeFilters.indexOf(filter.text);
+    var currentFilter = self.activeFilters()[filterIndex] || filter;
+    currentFilter = (0, _helpers.toggleFilter)(filter);
+
+    if (filterIndex === -1) {
+      self.activeFilters.push(filter.text);
+    } else {
+      self.activeFilters.remove(filter.text);
+    }
+
+    var newLocations = (0, _helpers.filterLocations)(self.locations(), self.activeFilters());
+    self.activeLocations(newLocations);
+  };
+  self.isActive = function (text) {
+    return true ? self.activeFilters.indexOf(text) !== -1 : false;
+  };
+
+  self.search = _knockout2.default.computed(function () {
+    if (self.searchTerm().length === 0) {
+      var newLocations = (0, _helpers.filterLocations)(self.locations(), self.activeFilters());
+      self.activeLocations(newLocations);
+    } else {
+      var _newLocations = (0, _helpers.searchLocations)(self.activeLocations(), self.searchTerm());
+      self.activeLocations(_newLocations);
+    }
+  });
+  self.showPlace = function (location) {
+    (0, _service.getPlace)(location);
+  };
+  self.hidePlace = function () {};
+};
 
 module.exports = {
-  gmap: gmap,
-  favorites: favorites
+  LocationVM: LocationVM
 };
 
 /***/ })

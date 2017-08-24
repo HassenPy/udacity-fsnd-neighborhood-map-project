@@ -1,10 +1,9 @@
 import ko from "knockout";
 
-import {InitMapVM, MarkerVM} from "./viewmodels";
+import {LocationVM} from "./viewmodels";
+import {InitMap} from "./service";
 
-var VMs = {
-  mapVM: new InitMapVM(),
-  markerVM: new MarkerVM()
-};
+InitMap();
 
-ko.applyBindings(VMs);
+ko.options.useOnlyNativeEvents = true;
+ko.applyBindings(new LocationVM());

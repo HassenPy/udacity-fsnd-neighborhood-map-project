@@ -1,48 +1,60 @@
 import ko from "knockout";
 
-import {gmap, favorites} from './models';
+import {gmap, filters} from './models';
+import {getPlace, setMarker} from './service';
+import {toggleFilter, filterLocations, searchLocations} from './helpers';
 
 
-let InitMapVM = function() {
-  const midoun = {lat: 33.807279, lng: 10.991097};
+let LocationVM = function() {
+  let self = this;
 
-  let map = new google.maps.Map(document.getElementById('map'), {
-    zoom: 12,
-    center: midoun,
-    mapTypeId: 'satellite',
-    mapTypeControlOptions: {
-        style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
-        position: google.maps.ControlPosition.TOP_CENTER
-    },
+  self.locations = ko.observableArray(gmap.locations);
+  self.activeLocations = ko.observableArray(gmap.locations);
+
+  // Adding an active state value to the filter, its only used by the view and VM.
+  self.filters = ko.observableArray(
+    // ES7 object spread: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Operators/Spread_operator
+    filters.map((filter) => ({...filter, active: false}))
+  );
+  self.activeFilters = ko.observableArray();
+
+  self.searchTerm = ko.observable('');
+
+  self.toggleFilter = function(filter){
+    // Get the index of the clicked filter
+    const filterIndex = self.activeFilters.indexOf(filter.text);
+    let currentFilter = self.activeFilters()[filterIndex] || filter;
+    currentFilter = toggleFilter(filter);
+
+    if ( filterIndex === -1) {
+      self.activeFilters.push(filter.text);
+    } else {
+      self.activeFilters.remove(filter.text);
+    }
+
+    const newLocations = filterLocations(self.locations(), self.activeFilters());
+    self.activeLocations(newLocations);
+  };
+  self.isActive = function(text) {
+    return (true ? self.activeFilters.indexOf(text) !== -1: false);
+  };
+
+  self.search = ko.computed(function() {
+    if (self.searchTerm().length === 0) {
+      const newLocations = filterLocations(self.locations(), self.activeFilters());
+      self.activeLocations(newLocations);
+    } else {
+      const newLocations = searchLocations(self.activeLocations(), self.searchTerm());
+      self.activeLocations(newLocations);
+    }
   });
-
-  // set the map model.
-  gmap(map);
+  self.showPlace = function(location) {
+    getPlace(location);
+  };
+  self.hidePlace = function() {
+  };
 };
-
-
-let MarkerVM = function() {
-  this.favorites = ko.observableArray(favorites);
-
-  this.favorites().forEach((coords) => {
-    let latLng = new google.maps.LatLng(coords.lat, coords.lng);
-    let marker = new google.maps.Marker({
-      position: latLng,
-    });
-    marker.setMap(gmap());
-    marker.addListener('click', toggleBounce);
-  });
-};
-
-function toggleBounce() {
-  if (this.getAnimation() !== null) {
-    this.setAnimation(null);
-  } else {
-    this.setAnimation(google.maps.Animation.BOUNCE);
-  }
-}
 
 module.exports = {
-  InitMapVM: InitMapVM,
-  MarkerVM: MarkerVM
+  LocationVM: LocationVM
 };
