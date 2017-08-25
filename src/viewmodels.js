@@ -1,7 +1,7 @@
 import ko from "knockout";
 
 import {gmap, filters} from './models';
-import {getPlace, setMarker} from './service';
+import {getPlace, updateMarkers} from './service';
 import {toggleFilter, filterLocations, searchLocations} from './helpers';
 
 
@@ -34,6 +34,7 @@ let LocationVM = function() {
 
     const newLocations = filterLocations(self.locations(), self.activeFilters());
     self.activeLocations(newLocations);
+    updateMarkers(self.activeLocations, gmap.markers);
   };
   self.isActive = function(text) {
     return (true ? self.activeFilters.indexOf(text) !== -1: false);
@@ -47,6 +48,7 @@ let LocationVM = function() {
       const newLocations = searchLocations(self.activeLocations(), self.searchTerm());
       self.activeLocations(newLocations);
     }
+    updateMarkers(self.activeLocations, gmap.markers);
   });
   self.showPlace = function(location) {
     getPlace(location);

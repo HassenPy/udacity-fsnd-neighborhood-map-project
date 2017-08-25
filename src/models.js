@@ -4,6 +4,7 @@ const icon_base = '/dist/assets/icons/';
 
 let gmap = {
   map: null,
+  markers: [],
   locations: [
     {
       lat: 33.808605,
