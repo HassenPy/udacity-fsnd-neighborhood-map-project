@@ -1,5 +1,7 @@
-import {gmap} from './models';
+import {gmap, icons} from './models';
 import {toggleBounce} from './helpers';
+
+
 var _ = require('lodash');
 
 const initMap = function() {
@@ -15,10 +17,18 @@ const initMap = function() {
     },
   });
 
-  gmap.locations.forEach((coords) => {
-    let latLng = new google.maps.LatLng(coords.lat, coords.lng);
+  gmap.locations.forEach((location) => {
+    let latLng = new google.maps.LatLng(location.lat, location.lng);
+    let icon = {
+      url: icons[location.filter],
+      size: new google.maps.Size(48, 48),
+      origin: new google.maps.Point(0, 0),
+      anchor: new google.maps.Point(17, 34),
+      scaledSize: new google.maps.Size(25, 25)
+    };
     let marker = new google.maps.Marker({
       position: latLng,
+      icon: icon
     });
     marker.setMap(gmap.map);
     marker.addListener('click', toggleBounce);
@@ -40,19 +50,24 @@ const getPlace = function(location) {
 };
 
 const updateMarkers = function(activeLocations, markers) {
-  markers.map((marker) => {
+  markers.find((marker) => {
     let found = false;
     activeLocations().find((location) => {
       // Find if location coords are equal to the marker coords.
       if (_.round(marker.position.lat(), 6) === location.lat && _.round(marker.position.lng(), 6) === location.lng){
         found = true;
+        return;
       }
     });
 
     let newMarker = null;
-    if (!found) newMarker = marker.setMap(null);
-    if (found) newMarker = marker.setMap(gmap.map);
-    return newMarker;
+    if (!found) {
+      newMarker = marker.setMap(null);
+      return;
+    } else {
+      newMarker = marker.setMap(gmap.map);
+      return;
+    }
   });
 };
 

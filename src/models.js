@@ -72,24 +72,31 @@ let gmap = {
   ]
 };
 
-let filters = [
+const icons = {
+  beach: icon_base + 'beach.svg',
+  restaurant: icon_base + 'lunch.svg',
+  monument: icon_base + 'monument.svg',
+  museum: icon_base + 'museum.svg'
+};
+
+const filters = [
   {
-    icon: icon_base + 'beach.svg',
+    icon: icons.beach,
     text: 'beach',
     types: ['beach']
   },
   {
-    icon: icon_base + 'lunch.svg',
+    icon: icons.restaurant,
     text: 'restaurant',
     types: ['restaurant']
   },
   {
-    icon: icon_base + 'monument.png',
+    icon: icons.monument,
     text: 'monument',
     types: ['Fortress', 'monument']
   },
   {
-    icon: icon_base + 'museum.png',
+    icon: icons.museum,
     text: 'museum',
     types: ['museum', 'point_of_interest']
   }
@@ -97,5 +104,6 @@ let filters = [
 
 module.exports = {
   gmap: gmap,
-  filters: filters
+  filters: filters,
+  icons: icons
 };

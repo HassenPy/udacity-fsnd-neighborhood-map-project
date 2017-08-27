@@ -148,7 +148,7 @@ h2 {
 }
 .locations .museum:before {
   content: '';
-  background-image: url('/dist/assets/icons/museum.png');
+  background-image: url('/dist/assets/icons/museum.svg');
   background-size: 24px 24px;
   width: 24px;
   height: 24px;
@@ -158,7 +158,7 @@ h2 {
 }
 .locations .monument:before {
   content: '';
-  background-image: url('/dist/assets/icons/monument.png');
+  background-image: url('/dist/assets/icons/monument.svg');
   background-size: 24px 24px;
   width: 24px;
   height: 24px;
@@ -185,4 +185,12 @@ h2 {
 .map iframe {
   width: 100%;
   height: 100%;
+}
+
+
+/* media queries */
+@media screen and (max-width: 460px) {
+  .map-nav {
+    width: 100%;
+  }
 }

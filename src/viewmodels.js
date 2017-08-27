@@ -8,6 +8,8 @@ import {toggleFilter, filterLocations, searchLocations} from './helpers';
 let LocationVM = function() {
   let self = this;
 
+  self.menuVisible = ko.observable(false);
+
   self.locations = ko.observableArray(gmap.locations);
   self.activeLocations = ko.observableArray(gmap.locations);
 
@@ -19,6 +21,10 @@ let LocationVM = function() {
   self.activeFilters = ko.observableArray();
 
   self.searchTerm = ko.observable('');
+
+  self.toggleMenu = function(){
+    self.menuVisible(!self.menuVisible());
+  };
 
   self.toggleFilter = function(filter){
     // Get the index of the clicked filter

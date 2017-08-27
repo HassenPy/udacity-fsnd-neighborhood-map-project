@@ -5964,27 +5964,35 @@ var gmap = {
   }]
 };
 
+var icons = {
+  beach: icon_base + 'beach.svg',
+  restaurant: icon_base + 'lunch.svg',
+  monument: icon_base + 'monument.svg',
+  museum: icon_base + 'museum.svg'
+};
+
 var filters = [{
-  icon: icon_base + 'beach.svg',
+  icon: icons.beach,
   text: 'beach',
   types: ['beach']
 }, {
-  icon: icon_base + 'lunch.svg',
+  icon: icons.restaurant,
   text: 'restaurant',
   types: ['restaurant']
 }, {
-  icon: icon_base + 'monument.png',
+  icon: icons.monument,
   text: 'monument',
   types: ['Fortress', 'monument']
 }, {
-  icon: icon_base + 'museum.png',
+  icon: icons.museum,
   text: 'museum',
   types: ['museum', 'point_of_interest']
 }];
 
 module.exports = {
   gmap: gmap,
-  filters: filters
+  filters: filters,
+  icons: icons
 };
 
 /***/ }),
@@ -6013,10 +6021,18 @@ var initMap = function initMap() {
     }
   });
 
-  _models.gmap.locations.forEach(function (coords) {
-    var latLng = new google.maps.LatLng(coords.lat, coords.lng);
+  _models.gmap.locations.forEach(function (location) {
+    var latLng = new google.maps.LatLng(location.lat, location.lng);
+    var icon = {
+      url: _models.icons[location.filter],
+      size: new google.maps.Size(48, 48),
+      origin: new google.maps.Point(0, 0),
+      anchor: new google.maps.Point(17, 34),
+      scaledSize: new google.maps.Size(25, 25)
+    };
     var marker = new google.maps.Marker({
-      position: latLng
+      position: latLng,
+      icon: icon
     });
     marker.setMap(_models.gmap.map);
     marker.addListener('click', _helpers.toggleBounce);
@@ -6038,19 +6054,24 @@ var getPlace = function getPlace(location) {
 };
 
 var updateMarkers = function updateMarkers(activeLocations, markers) {
-  markers.map(function (marker) {
+  markers.find(function (marker) {
     var found = false;
     activeLocations().find(function (location) {
       // Find if location coords are equal to the marker coords.
       if (_.round(marker.position.lat(), 6) === location.lat && _.round(marker.position.lng(), 6) === location.lng) {
         found = true;
+        return;
       }
     });
 
     var newMarker = null;
-    if (!found) newMarker = marker.setMap(null);
-    if (found) newMarker = marker.setMap(_models.gmap.map);
-    return newMarker;
+    if (!found) {
+      newMarker = marker.setMap(null);
+      return;
+    } else {
+      newMarker = marker.setMap(_models.gmap.map);
+      return;
+    }
   });
 };
 
@@ -6159,6 +6180,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var LocationVM = function LocationVM() {
   var self = this;
 
+  self.menuVisible = _knockout2.default.observable(false);
+
   self.locations = _knockout2.default.observableArray(_models.gmap.locations);
   self.activeLocations = _knockout2.default.observableArray(_models.gmap.locations);
 
@@ -6171,6 +6194,10 @@ var LocationVM = function LocationVM() {
   self.activeFilters = _knockout2.default.observableArray();
 
   self.searchTerm = _knockout2.default.observable('');
+
+  self.toggleMenu = function () {
+    self.menuVisible(!self.menuVisible());
+  };
 
   self.toggleFilter = function (filter) {
     // Get the index of the clicked filter

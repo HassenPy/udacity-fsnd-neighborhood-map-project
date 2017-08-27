@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "webpack --config webpack.config.js",
-    "start": "gulp run",
+    "build": "webpack",
+    "start": "webpack --config webpack.config.js && gulp run",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

@@ -8,11 +8,11 @@
   </head>
 <body>
   <main aria="main">
-    <button class="menu-show">show menu</button>
-    <aside class="map-nav">
+    <button class="menu-show" data-bind="click: $root.toggleMenu, visible: !menuVisible()">show menu</button>
+    <aside class="map-nav" data-bind="visible: menuVisible">
       <!-- element that holds the locations and filtering -->
       <header class="map-filters">
-        <button class="menu-hide">hide menu</button>
+        <button class="menu-hide" data-bind="click: $root.toggleMenu">hide menu</button>
         <input type="text" data-bind="value: searchTerm, valueUpdate: 'afterkeydown'" value="search locations" class="search" id="search">
 
         <h2 class="filters-header">Filters</h2>
@@ -22,8 +22,7 @@
             <div class="img-wrapper">
               <img data-bind="attr: {src: icon, alt: text}">
             </div>
-            <label data-bind="attr: {for: text}, text: text"></label>
-            <input type="checkbox" data-bind="attr: {id: text, value: text}">
+            <label data-bind="text: text"></label>
           </button>
         </div>
 
@@ -38,9 +37,7 @@
     </aside>
 
     <section class="map">
-      <div id="map">
-
-      </div>
+      <div id="map"></div>
     </section>
   </main>
 
