@@ -1,4 +1,5 @@
 const toggleBounce = function() {
+  console.log(this);
   if (this.getAnimation() !== null) {
     this.setAnimation(null);
   } else {

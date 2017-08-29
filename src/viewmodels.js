@@ -1,7 +1,7 @@
 import ko from "knockout";
 
 import {gmap, filters} from './models';
-import {getPlace, updateMarkers} from './service';
+import {getPlace, updateMarkers, zoomMarker, resetZoom} from './service';
 import {toggleFilter, filterLocations, searchLocations} from './helpers';
 
 
@@ -21,6 +21,9 @@ let LocationVM = function() {
   self.activeFilters = ko.observableArray();
 
   self.searchTerm = ko.observable('');
+  self.locationProfile = ko.observable(false);
+  self.locationMarker = ko.observable('');
+  self.requestStatus = ko.observable('');
 
   self.toggleMenu = function(){
     self.menuVisible(!self.menuVisible());
@@ -57,9 +60,21 @@ let LocationVM = function() {
     updateMarkers(self.activeLocations, gmap.markers);
   });
   self.showPlace = function(location) {
-    getPlace(location);
+    self.requestStatus("fetching location info...");
+    self.locationMarker(location.marker);
+    getPlace(location, self);
+    zoomMarker(location.lat, location.lng, location.marker);
   };
   self.hidePlace = function() {
+    resetZoom(self.locationMarker());
+    self.requestStatus('');
+    self.locationMarker('');
+    self.locationProfile('');
+  };
+  self.getPhoto = function () {
+    return self.locationProfile().photos[0].getUrl({
+      maxWidth: 450
+    });
   };
 };
 

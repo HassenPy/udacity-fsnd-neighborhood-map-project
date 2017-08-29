@@ -42,9 +42,9 @@ let gmap = {
       filter: 'restaurant'
     },
     {
-      lat: 33.886705,
-      lng: 10.857537,
-      title: 'Marina Djerba',
+      lat: 33.814457,
+      lng: 11.054762,
+      title: 'Yéti beach',
       type: 'point_of_interest',
       filter: 'beach'
     },
@@ -56,10 +56,10 @@ let gmap = {
       filter: 'museum'
     },
     {
-      lat: 33.884048,
-      lng: 10.860582,
-      title: 'Ghazi Mustapha Tower',
-      type: 'Fortress',
+      lat: 33.632006,
+      lng: 10.909170,
+      title: 'Borj El Akrab',
+      type: 'monument',
       filter: 'monument'
     },
     {
@@ -67,7 +67,14 @@ let gmap = {
       lng: 11.045033,
       title: 'Lalla Hadria Museum',
       type: 'museum',
-      filter: 'monument'
+      filter: 'museum'
+    },
+    {
+      lat: 33.821267,
+      lng: 10.854319,
+      title: 'Djerbahood',
+      type: 'museum',
+      filter: 'museum'
     }
   ]
 };

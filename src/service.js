@@ -1,12 +1,12 @@
 import {gmap, icons} from './models';
 import {toggleBounce} from './helpers';
+import axios from 'axios';
+let _ = require('lodash');
 
-
-var _ = require('lodash');
 
 const initMap = function() {
   const midoun = {lat: 33.807279, lng: 10.991097};
-
+  gmap.center = midoun;
   gmap.map = new google.maps.Map(document.getElementById('map'), {
     zoom: 12,
     center: midoun,
@@ -17,7 +17,7 @@ const initMap = function() {
     },
   });
 
-  gmap.locations.forEach((location) => {
+  gmap.locations = gmap.locations.map((location) => {
     let latLng = new google.maps.LatLng(location.lat, location.lng);
     let icon = {
       url: icons[location.filter],
@@ -31,23 +31,15 @@ const initMap = function() {
       icon: icon
     });
     marker.setMap(gmap.map);
+    marker.setAnimation(null);
     marker.addListener('click', toggleBounce);
     gmap.markers.push(marker);
+    let newLocation = {...location, marker: marker};
+    return newLocation;
   });
+  gmap.places = new google.maps.places.PlacesService(gmap.map);
 };
 
-const getPlace = function(location) {
-  const coords = new google.maps.LatLng(location.lat, location.lng);
-  let service = new google.maps.places.PlacesService(gmap.map);
-
-  service.nearbySearch({
-    location: coords,
-    radius: '1',
-    type: [location.type]
-  }, function(response){
-    console.log(response);
-  });
-};
 
 const updateMarkers = function(activeLocations, markers) {
   markers.find((marker) => {
@@ -71,8 +63,80 @@ const updateMarkers = function(activeLocations, markers) {
   });
 };
 
+
+const getPlace = function(location, context) {
+  const coords = new google.maps.LatLng(location.lat, location.lng);
+  let service = new google.maps.places.PlacesService(gmap.map);
+
+  service.nearbySearch({
+    location: coords,
+    type: [location.type],
+    keywords: location.title,
+    radius: 5,
+    rankby: "distance"
+  }, function(response){
+    gmap.places.getDetails({
+      placeId: response[0].place_id
+    }, function(response){
+      axios.get('https://en.wikipedia.org/w/api.php', {
+        params: {
+          origin: '*',
+          action: 'query',
+          titles: response.name,
+          prop: 'extracts',
+          inprop: 'url',
+          exintro: 'explaintext',
+          format: 'json'
+        }
+      })
+        .then(function(wikiResponse){
+          if (wikiResponse.data.query.pages['-1']) {
+            response.summary = null;
+            response.wikiLink = '';
+            response.wikiText = '';
+          } else {
+            const pages = wikiResponse.data.query.pages;
+            const page = pages[Object.keys(pages)[0]];
+            response.summary = page.extract;
+            response.wikiLink = 'https://en.wikipedia.org/?curid=' + page.pageid;
+            response.wikiText = 'more on wikipedia';
+          }
+
+          let coords = {};
+          coords.lat = _.round(response.geometry.location.lat(), 6);
+          coords.lng = _.round(response.geometry.location.lng(), 6);
+          response.coords = coords;
+
+          context.locationProfile(response);
+          context.requestStatus('');
+        })
+      .catch(function(response){
+        context.requestStatus('an error has occured while fetching the location info!');
+      });
+    });
+  });
+};
+
+
+const zoomMarker = function(lat, lng, marker) {
+  const latLng = new google.maps.LatLng(lat, lng);
+  const clickEvent = toggleBounce.bind(marker);
+  clickEvent();
+  gmap.map.setZoom(17);
+  gmap.map.panTo(latLng);
+}
+const resetZoom = function(marker) {
+  const clickEvent = toggleBounce.bind(marker);
+  clickEvent();
+  gmap.map.setZoom(12);
+  gmap.map.panTo(gmap.center);
+
+}
+
 module.exports = {
   initMap: initMap,
+  updateMarkers: updateMarkers,
   getPlace: getPlace,
-  updateMarkers: updateMarkers
+  zoomMarker: zoomMarker,
+  resetZoom: resetZoom
 };
