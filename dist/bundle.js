@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 13);
+/******/ 	return __webpack_require__(__webpack_require__.s = 12);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -72,8 +72,8 @@
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var bind = __webpack_require__(6);
-var isBuffer = __webpack_require__(17);
+var bind = __webpack_require__(5);
+var isBuffer = __webpack_require__(16);
 
 /*global toString:true*/
 
@@ -6205,7 +6205,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 /* WEBPACK VAR INJECTION */(function(process) {
 
 var utils = __webpack_require__(0);
-var normalizeHeaderName = __webpack_require__(19);
+var normalizeHeaderName = __webpack_require__(18);
 
 var DEFAULT_CONTENT_TYPE = {
   'Content-Type': 'application/x-www-form-urlencoded'
@@ -6221,10 +6221,10 @@ function getDefaultAdapter() {
   var adapter;
   if (typeof XMLHttpRequest !== 'undefined') {
     // For browsers use XHR adapter
-    adapter = __webpack_require__(8);
+    adapter = __webpack_require__(7);
   } else if (typeof process !== 'undefined') {
     // For node use HTTP adapter
-    adapter = __webpack_require__(8);
+    adapter = __webpack_require__(7);
   }
   return adapter;
 }
@@ -6288,7 +6288,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 });
 
 module.exports = defaults;
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
 
 /***/ }),
 /* 3 */
@@ -6410,21 +6410,22 @@ module.exports = {
 "use strict";
 
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 var _models = __webpack_require__(3);
 
-var _helpers = __webpack_require__(5);
-
-var _axios = __webpack_require__(15);
+var _axios = __webpack_require__(14);
 
 var _axios2 = _interopRequireDefault(_axios);
 
-var _lodash = __webpack_require__(34);
+var _lodash = __webpack_require__(33);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var initDOM = function initDOM() {
+  // Initialize the map with a center;
   var midoun = new google.maps.LatLng(33.807279, 10.991097);
   _models.gmap.center = midoun;
   _models.gmap.map = new google.maps.Map(document.getElementById('map'), {
@@ -6437,6 +6438,7 @@ var initDOM = function initDOM() {
     }
   });
 
+  // create markers with custom icons for the locations.
   _models.gmap.locations = _models.gmap.locations.map(function (location) {
     var latLng = new google.maps.LatLng(location.lat, location.lng);
     var icon = {
@@ -6450,60 +6452,56 @@ var initDOM = function initDOM() {
     var marker = new google.maps.Marker({ position: latLng, icon: icon });
     marker.setMap(_models.gmap.map);
     marker.setAnimation(null);
-    marker.location = location;
     marker.addListener('click', showPlace);
-    marker.latLng = latLng;
+    // keep a location reference in the marker object, this was done to make
+    // displaying the location info when clicking a marker on the map easier.
+    marker.location = location;
+
+    // keep a reference of all the markers.
     _models.gmap.markers.push(marker);
 
+    // keep a marker reference in the location object so that the ko view can
+    // pass it along when calling showPlace.
+    // NOTE: initially, the marker is unaware of the location object which holds the location info
+    //       also the location object is unaware of the marker being created for it, storing a reference
+    //       to each one is the only way i could think of.
+    // the ... syntax is a ES7 spread which represents all the object attributes.
     var newLocation = _extends({}, location, {
       marker: marker
     });
     return newLocation;
   });
+  // replace the locations object by the newly created one which holds the marker references.
   _models.gmap.places = new google.maps.places.PlacesService(_models.gmap.map);
 
+  // bind a function to the button that hides the info of a location.
   document.querySelector("#hidePlace").addEventListener("click", hidePlace);
 };
 
 var hidePlace = function hidePlace() {
+  // Hide the place info and display the locations.
   var placeEl = document.querySelector(".place");
-  var nav = document.querySelector("#locations");
+  var locations = document.querySelector("#locations");
   var status = document.querySelector(".status");
   placeEl.style.display = "none";
-  nav.style.display = "block";
+  locations.style.display = "block";
   status.style.display = "none";
-  (0, _helpers.deanimateMarker)(_models.gmap.activeMarker, _models.gmap);
+  deanimateMarker(_models.gmap.activeMarker);
 };
 
-var updateMarkers = function updateMarkers(activeLocations, markers) {
-  var found = false;
-  markers.forEach(function (marker) {
-    found = activeLocations().find(function (location) {
-      // Find if location coords are equal to the marker coords.
-      if ((0, _lodash.round)(marker.position.lat(), 6) === location.lat && (0, _lodash.round)(marker.position.lng(), 6) === location.lng) {
-        return true;
-      }
-    });
-
-    if (!found) {
-      if (marker === _models.gmap.activeMarker) {
-        hidePlace();
-      }
-      marker.setMap(null);
-    } else {
-      if (marker === _models.gmap.activeMarker) return;
-      marker.setMap(_models.gmap.map);
-    }
-  });
-};
-
+/**
+ * Request a location info from both google maps places api and wikipedia.
+ * this function is dynamically bound, it was made so that it can be used by both
+ * the map and knockout.
+ */
 var showPlace = function showPlace() {
   var self = this;
   var coords = new google.maps.LatLng(this.location.lat, this.location.lng);
   var service = new google.maps.places.PlacesService(_models.gmap.map);
 
-  (0, _helpers.animateMarker)(this, _models.gmap);
+  animateMarker(this);
 
+  // initialize the place info with what we already have.
   var place = {};
   place.title = this.location.title;
   place.lat = this.location.lat;
@@ -6517,22 +6515,28 @@ var showPlace = function showPlace() {
     radius: 5,
     rankby: "distance"
   }, function (response) {
-    if (!response[0]) {
-      showStatus("an error occured! make sure you're connected to the internet ...");
+    // google maps nearbySearch api returns an empty array when connection is lost.
+    if (response.length === 0) {
+      showStatus("connection lost, make sure you have a stable internet connection ...");
       return;
     }
     _models.gmap.places.getDetails({
       placeId: response[0].place_id
     }, function (response) {
-      if (!response.formatted_address) {
-        showStatus("an error occured! make sure you're connected to the internet ...");
+      // google maps getDetails api returns an empty array when connection is lost.
+      if ((typeof response === 'undefined' ? 'undefined' : _typeof(response)) === _typeof([]) && response.length === 0) {
+        console.log("lost");
+        showStatus("connection lost, make sure you have a stable internet connection ...");
         return;
       }
+      // add the received info from google maps places api to the place object.
       place.address = response.formatted_address;
       place.types = response.types;
       place.photo = {};
       place.photo.url = response.photos[0].getUrl({ maxWidth: 500 });
       place.photo.attribution = response.photos[0].html_attributions[0];
+
+      // fetch info from wikipedia, using an 'extracts' prop to get just the summary of the article.
       _axios2.default.get('https://en.wikipedia.org/w/api.php', {
         params: {
           origin: '*',
@@ -6545,6 +6549,7 @@ var showPlace = function showPlace() {
         }
       }).then(function (wikiResponse) {
         place.summary = {};
+        // wikipedia returns a pages with and id of -1 if there's no result.
         if (wikiResponse.data.query.pages['-1']) {
           place.summary.text = null;
           place.summary.attribution = '';
@@ -6554,29 +6559,47 @@ var showPlace = function showPlace() {
           place.summary.text = page.extract;
           place.summary.attribution = 'https://en.wikipedia.org/?curid=' + page.pageid;
         }
+
+        // render the place object.
         renderPlace(place);
       }).catch(function (response) {
-        showStatus("an error occured! make sure you're connected to the internet ...");
+        showStatus("connection lost, make sure you have a stable internet connection ...");
       });
     });
   });
 };
 
+/**
+ * renders a status message.
+ * @param {string} message - message to show.
+ */
 var showStatus = function showStatus(message) {
   var nav = document.querySelector(".map-nav");
   var el = document.querySelector(".status");
   var locations = document.querySelector("#locations");
   var btnShow = document.querySelector(".show");
+
+  // display the status block.
   el.style.display = "block";
   el.innerText = message;
+
+  // hide the locations block;
   locations.style.display = "none";
+
+  // show the navigation menu in case it was already hidden.
   nav.style.display = "block";
   btnShow.style.display = "none";
 };
 
+/**
+ * renders the location.
+ * @param {Object} place - an object that holds the place info.
+ */
 var renderPlace = function renderPlace(place) {
   var placeEl = document.querySelector(".place");
   var status = document.querySelector(".status");
+
+  // hide the status block and show the place info block;
   status.style.display = "none";
   placeEl.style.display = "block";
 
@@ -6585,17 +6608,21 @@ var renderPlace = function renderPlace(place) {
   placeEl.querySelector(".place-picture").src = place.photo.url;
   placeEl.querySelector(".place-picture__attribution").href = place.photo.attribution;
 
+  // render the coordinates
   var el = document.createElement("span");
   el.innerText = place.lat + ', ' + place.lng;
   placeEl.querySelector(".place-coords").innerHTML = "";
   placeEl.querySelector(".place-coords").appendChild(el);
 
+  // render the place types.
   placeEl.querySelector(".place-types").innerHTML = "";
   place.types.forEach(function (type) {
     var el = document.createElement("span");
     el.innerText = type;
     placeEl.querySelector(".place-types").appendChild(el);
   });
+
+  // render the wikipedia info if its there.
   if (place.summary.text) {
     placeEl.querySelector(".place-summary").style.display = "block";
     placeEl.querySelector(".place-summary p").innerHTML = place.summary.text;
@@ -6603,6 +6630,59 @@ var renderPlace = function renderPlace(place) {
   } else {
     placeEl.querySelector(".place-summary").style.display = "none";
   }
+};
+
+/**
+ * updates the markers visibility based on the provided active locations,
+ * this is used by the menu filters and search autocomplete.
+ *
+ * @param {Object} activeLocations - the active locations to filter against.
+ */
+var updateMarkers = function updateMarkers(activeLocations) {
+  var found = false;
+  _models.gmap.markers.forEach(function (marker) {
+    found = activeLocations().find(function (location) {
+      // Find if location coords are equal to the marker coords.
+      // uses the location reference in a marker.
+      if (marker.location.lat === location.lat && marker.location.lng === location.lng) {
+        return true;
+      }
+    });
+
+    if (!found) {
+      // hide the place block if its being shown.
+      if (marker === _models.gmap.activeMarker) {
+        hidePlace();
+      }
+      marker.setMap(null);
+    } else {
+      // applying setMap on the active marker would disable its bounce animation.
+      if (marker === _models.gmap.activeMarker) return;
+      marker.setMap(_models.gmap.map);
+    }
+  });
+};
+
+/**
+ * bounce and zoom on a marker.
+ * @param {Object} marker - the marker to apply animation on.
+ */
+var animateMarker = function animateMarker(marker) {
+  marker.setAnimation(google.maps.Animation.BOUNCE);
+  _models.gmap.map.panTo(marker.position);
+  _models.gmap.map.setZoom(16);
+  _models.gmap.activeMarker = marker;
+};
+
+/**
+ * remove bounce animation from marker and reset initial zoom.
+ * @param {Object} marker - the marker to deanimate.
+ */
+var deanimateMarker = function deanimateMarker(marker) {
+  marker.setAnimation(null);
+  _models.gmap.map.panTo(_models.gmap.center);
+  _models.gmap.map.setZoom(12);
+  _models.gmap.activeMarker = marker;
 };
 
 module.exports = {
@@ -6613,58 +6693,6 @@ module.exports = {
 
 /***/ }),
 /* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
-var animateMarker = function animateMarker(marker, gmap) {
-  marker.setAnimation(google.maps.Animation.BOUNCE);
-  gmap.map.panTo(marker.position);
-  gmap.map.setZoom(16);
-  gmap.activeMarker = marker;
-};
-var deanimateMarker = function deanimateMarker(marker, gmap) {
-  marker.setAnimation(null);
-  gmap.map.panTo(gmap.center);
-  gmap.map.setZoom(12);
-  gmap.activeMarker = marker;
-};
-
-var toggleFilter = function toggleFilter(filter) {
-  return _extends({}, filter, {
-    active: !filter.active
-  });
-};
-
-var filterLocations = function filterLocations(locations, filters) {
-  if (filters.length == 0) return locations;
-
-  var newLocations = locations.filter(function (location) {
-    return filters.indexOf(location.filter) !== -1;
-  });
-  return newLocations;
-};
-
-var searchLocations = function searchLocations(locations, searchTerm) {
-  var newLocations = locations.filter(function (location) {
-    return location.title.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1;
-  });
-  return newLocations;
-};
-
-module.exports = {
-  animateMarker: animateMarker,
-  deanimateMarker: deanimateMarker,
-  toggleFilter: toggleFilter,
-  filterLocations: filterLocations,
-  searchLocations: searchLocations
-};
-
-/***/ }),
-/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6681,7 +6709,7 @@ module.exports = function bind(fn, thisArg) {
 };
 
 /***/ }),
-/* 7 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6874,19 +6902,19 @@ process.umask = function () {
 };
 
 /***/ }),
-/* 8 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {
 
 var utils = __webpack_require__(0);
-var settle = __webpack_require__(20);
-var buildURL = __webpack_require__(22);
-var parseHeaders = __webpack_require__(23);
-var isURLSameOrigin = __webpack_require__(24);
-var createError = __webpack_require__(9);
-var btoa = typeof window !== 'undefined' && window.btoa && window.btoa.bind(window) || __webpack_require__(25);
+var settle = __webpack_require__(19);
+var buildURL = __webpack_require__(21);
+var parseHeaders = __webpack_require__(22);
+var isURLSameOrigin = __webpack_require__(23);
+var createError = __webpack_require__(8);
+var btoa = typeof window !== 'undefined' && window.btoa && window.btoa.bind(window) || __webpack_require__(24);
 
 module.exports = function xhrAdapter(config) {
   return new Promise(function dispatchXhrRequest(resolve, reject) {
@@ -6979,7 +7007,7 @@ module.exports = function xhrAdapter(config) {
     // This is only done if running in a standard browser environment.
     // Specifically not if we're in a web worker, or react-native.
     if (utils.isStandardBrowserEnv()) {
-      var cookies = __webpack_require__(26);
+      var cookies = __webpack_require__(25);
 
       // Add xsrf header
       var xsrfValue = (config.withCredentials || isURLSameOrigin(config.url)) && config.xsrfCookieName ? cookies.read(config.xsrfCookieName) : undefined;
@@ -7052,16 +7080,16 @@ module.exports = function xhrAdapter(config) {
     request.send(requestData);
   });
 };
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
 
 /***/ }),
-/* 9 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var enhanceError = __webpack_require__(21);
+var enhanceError = __webpack_require__(20);
 
 /**
  * Create an Error with the specified message, config, error code, request and response.
@@ -7079,7 +7107,7 @@ module.exports = function createError(message, config, code, request, response) 
 };
 
 /***/ }),
-/* 10 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7090,7 +7118,7 @@ module.exports = function isCancel(value) {
 };
 
 /***/ }),
-/* 11 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7116,7 +7144,7 @@ Cancel.prototype.__CANCEL__ = true;
 module.exports = Cancel;
 
 /***/ }),
-/* 12 */
+/* 11 */
 /***/ (function(module, exports) {
 
 /* WEBPACK VAR INJECTION */(function(__webpack_amd_options__) {/* globals __webpack_amd_options__ */
@@ -7125,7 +7153,7 @@ module.exports = __webpack_amd_options__;
 /* WEBPACK VAR INJECTION */}.call(exports, {}))
 
 /***/ }),
-/* 13 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7135,7 +7163,7 @@ var _knockout = __webpack_require__(1);
 
 var _knockout2 = _interopRequireDefault(_knockout);
 
-var _viewmodels = __webpack_require__(14);
+var _viewmodels = __webpack_require__(13);
 
 var _service = __webpack_require__(4);
 
@@ -7147,7 +7175,7 @@ _knockout2.default.options.useOnlyNativeEvents = true;
 _knockout2.default.applyBindings(new _viewmodels.LocationVM());
 
 /***/ }),
-/* 14 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7163,19 +7191,18 @@ var _models = __webpack_require__(3);
 
 var _service = __webpack_require__(4);
 
-var _helpers = __webpack_require__(5);
+var _helpers = __webpack_require__(36);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var LocationVM = function LocationVM() {
   var self = this;
+
   self.locations = _knockout2.default.observableArray(_models.gmap.locations);
   self.activeLocations = _knockout2.default.observableArray(_models.gmap.locations);
 
   // Adding an initial active state to the filter.
-  self.filters = _knockout2.default.observableArray(
-  // ES7 object spread: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Operators/Spread_operator
-  _models.filters.map(function (filter) {
+  self.filters = _knockout2.default.observableArray(_models.filters.map(function (filter) {
     return _extends({}, filter, { active: false });
   }));
   self.activeFilters = _knockout2.default.observableArray();
@@ -7199,7 +7226,7 @@ var LocationVM = function LocationVM() {
     // Get the index of the clicked filter
     var filterIndex = self.activeFilters.indexOf(filter.text);
     var currentFilter = self.activeFilters()[filterIndex] || filter;
-    currentFilter = (0, _helpers.toggleFilter)(filter);
+    (0, _helpers.toggleFilter)(filter);
 
     if (filterIndex === -1) {
       self.activeFilters.push(filter.text);
@@ -7207,28 +7234,33 @@ var LocationVM = function LocationVM() {
       self.activeFilters.remove(filter.text);
     }
 
+    // set the filtered locations and update markers.
     var newLocations = (0, _helpers.filterLocations)(self.locations(), self.activeFilters());
     self.activeLocations(newLocations);
-    console.log("updating markers from filter");
-    (0, _service.updateMarkers)(self.activeLocations, _models.gmap.markers);
+    (0, _service.updateMarkers)(self.activeLocations);
   };
+
+  // check if a filter is active.
   self.isActive = function (text) {
     return true ? self.activeFilters.indexOf(text) !== -1 : false;
   };
 
   self.search = function () {
-    console.log(self.searchTerm().length);
     if (self.searchTerm().length === 0) {
       var newLocations = (0, _helpers.filterLocations)(self.locations(), self.activeFilters());
       self.activeLocations(newLocations);
     } else {
+      // we won't search activeLocation since its being updated with every search,
+      // so using the full filtered locations will make it able to display locations when
+      // a user is removing characters from the searchTerm, else the activeLocations list will
+      // keep shrinking until the user removes the full searchTerm keyword.
       var _newLocations = (0, _helpers.filterLocations)(self.locations(), self.activeFilters());
       _newLocations = (0, _helpers.searchLocations)(_newLocations, self.searchTerm());
       self.activeLocations(_newLocations);
     }
-    console.log("updating markers from search");
-    (0, _service.updateMarkers)(self.activeLocations, _models.gmap.markers);
+    (0, _service.updateMarkers)(self.activeLocations);
   };
+
   self.showPlace = function (location) {
     var fn = _service.showPlace.bind(location.marker);
     fn();
@@ -7240,24 +7272,24 @@ module.exports = {
 };
 
 /***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+module.exports = __webpack_require__(15);
+
+/***/ }),
 /* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-module.exports = __webpack_require__(16);
-
-/***/ }),
-/* 16 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
 var utils = __webpack_require__(0);
-var bind = __webpack_require__(6);
-var Axios = __webpack_require__(18);
+var bind = __webpack_require__(5);
+var Axios = __webpack_require__(17);
 var defaults = __webpack_require__(2);
 
 /**
@@ -7291,15 +7323,15 @@ axios.create = function create(instanceConfig) {
 };
 
 // Expose Cancel & CancelToken
-axios.Cancel = __webpack_require__(11);
-axios.CancelToken = __webpack_require__(32);
-axios.isCancel = __webpack_require__(10);
+axios.Cancel = __webpack_require__(10);
+axios.CancelToken = __webpack_require__(31);
+axios.isCancel = __webpack_require__(9);
 
 // Expose all/spread
 axios.all = function all(promises) {
   return Promise.all(promises);
 };
-axios.spread = __webpack_require__(33);
+axios.spread = __webpack_require__(32);
 
 module.exports = axios;
 
@@ -7307,7 +7339,7 @@ module.exports = axios;
 module.exports.default = axios;
 
 /***/ }),
-/* 17 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7336,7 +7368,7 @@ function isSlowBuffer(obj) {
 }
 
 /***/ }),
-/* 18 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7344,10 +7376,10 @@ function isSlowBuffer(obj) {
 
 var defaults = __webpack_require__(2);
 var utils = __webpack_require__(0);
-var InterceptorManager = __webpack_require__(27);
-var dispatchRequest = __webpack_require__(28);
-var isAbsoluteURL = __webpack_require__(30);
-var combineURLs = __webpack_require__(31);
+var InterceptorManager = __webpack_require__(26);
+var dispatchRequest = __webpack_require__(27);
+var isAbsoluteURL = __webpack_require__(29);
+var combineURLs = __webpack_require__(30);
 
 /**
  * Create a new instance of Axios
@@ -7428,7 +7460,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 module.exports = Axios;
 
 /***/ }),
-/* 19 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7446,13 +7478,13 @@ module.exports = function normalizeHeaderName(headers, normalizedName) {
 };
 
 /***/ }),
-/* 20 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var createError = __webpack_require__(9);
+var createError = __webpack_require__(8);
 
 /**
  * Resolve or reject a Promise based on response status.
@@ -7472,7 +7504,7 @@ module.exports = function settle(resolve, reject, response) {
 };
 
 /***/ }),
-/* 21 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7500,7 +7532,7 @@ module.exports = function enhanceError(error, config, code, request, response) {
 };
 
 /***/ }),
-/* 22 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7567,7 +7599,7 @@ module.exports = function buildURL(url, params, paramsSerializer) {
 };
 
 /***/ }),
-/* 23 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7612,7 +7644,7 @@ module.exports = function parseHeaders(headers) {
 };
 
 /***/ }),
-/* 24 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7681,7 +7713,7 @@ function nonStandardBrowserEnv() {
 }();
 
 /***/ }),
-/* 25 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7722,7 +7754,7 @@ function btoa(input) {
 module.exports = btoa;
 
 /***/ }),
-/* 26 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7781,7 +7813,7 @@ function nonStandardBrowserEnv() {
 }();
 
 /***/ }),
-/* 27 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7839,15 +7871,15 @@ InterceptorManager.prototype.forEach = function forEach(fn) {
 module.exports = InterceptorManager;
 
 /***/ }),
-/* 28 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var utils = __webpack_require__(0);
-var transformData = __webpack_require__(29);
-var isCancel = __webpack_require__(10);
+var transformData = __webpack_require__(28);
+var isCancel = __webpack_require__(9);
 var defaults = __webpack_require__(2);
 
 /**
@@ -7905,7 +7937,7 @@ module.exports = function dispatchRequest(config) {
 };
 
 /***/ }),
-/* 29 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7931,7 +7963,7 @@ module.exports = function transformData(data, headers, fns) {
 };
 
 /***/ }),
-/* 30 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7953,7 +7985,7 @@ module.exports = function isAbsoluteURL(url) {
 };
 
 /***/ }),
-/* 31 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7972,13 +8004,13 @@ module.exports = function combineURLs(baseURL, relativeURL) {
 };
 
 /***/ }),
-/* 32 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var Cancel = __webpack_require__(11);
+var Cancel = __webpack_require__(10);
 
 /**
  * A `CancelToken` is an object that can be used to request cancellation of an operation.
@@ -8035,7 +8067,7 @@ CancelToken.source = function source() {
 module.exports = CancelToken;
 
 /***/ }),
-/* 33 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8069,7 +8101,7 @@ module.exports = function spread(callback) {
 };
 
 /***/ }),
-/* 34 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17507,7 +17539,7 @@ LazyWrapper.prototype.clone=lazyClone;LazyWrapper.prototype.reverse=lazyReverse;
 lodash.prototype.at=wrapperAt;lodash.prototype.chain=wrapperChain;lodash.prototype.commit=wrapperCommit;lodash.prototype.next=wrapperNext;lodash.prototype.plant=wrapperPlant;lodash.prototype.reverse=wrapperReverse;lodash.prototype.toJSON=lodash.prototype.valueOf=lodash.prototype.value=wrapperValue;// Add lazy aliases.
 lodash.prototype.first=lodash.prototype.head;if(symIterator){lodash.prototype[symIterator]=wrapperToIterator;}return lodash;};/*--------------------------------------------------------------------------*/// Export lodash.
 var _=runInContext();// Some AMD build optimizers, like r.js, check for condition patterns like:
-if("function"=='function'&&_typeof(__webpack_require__(12))=='object'&&__webpack_require__(12)){// Expose Lodash on the global object to prevent errors when Lodash is
+if("function"=='function'&&_typeof(__webpack_require__(11))=='object'&&__webpack_require__(11)){// Expose Lodash on the global object to prevent errors when Lodash is
 // loaded by a script tag in the presence of an AMD loader.
 // See http://requirejs.org/docs/errors.html#mismatch for more details.
 // Use `_.noConflict` to remove Lodash from the global object.
@@ -17519,10 +17551,10 @@ else if(freeModule){// Export for Node.js.
 (freeModule.exports=_)._=_;// Export for CommonJS support.
 freeExports._=_;}else{// Export to the global object.
 root._=_;}}).call(undefined);
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(35), __webpack_require__(36)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(34), __webpack_require__(35)(module)))
 
 /***/ }),
-/* 35 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17552,7 +17584,7 @@ try {
 module.exports = g;
 
 /***/ }),
-/* 36 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17579,6 +17611,56 @@ module.exports = function (module) {
 		module.webpackPolyfill = 1;
 	}
 	return module;
+};
+
+/***/ }),
+/* 36 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+/**
+ * update the active state on a filter.
+ * @param {Object} filter - the filter to update its active state.
+ */
+var toggleFilter = function toggleFilter(filter) {
+  return _extends({}, filter, { active: !filter.active });
+};
+
+/**
+ * add an active state the filter.
+ * @param {Array} locations - all the locations unfiltred.
+ * @param {Array} filters - the filters to apply.
+ */
+var filterLocations = function filterLocations(locations, filters) {
+  if (filters.length == 0) return locations;
+
+  // Check if the location.filter value is present the filters array.
+  var newLocations = locations.filter(function (location) {
+    return filters.indexOf(location.filter) !== -1;
+  });
+  return newLocations;
+};
+
+/**
+ * search a string in the given locations.
+ * @param {Array} activeLocations - active locations to search.
+ * @param {String} searchTerm - text to search.
+ */
+var searchLocations = function searchLocations(activeLocations, searchTerm) {
+  var newLocations = activeLocations.filter(function (location) {
+    return location.title.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1;
+  });
+  return newLocations;
+};
+
+module.exports = {
+  toggleFilter: toggleFilter,
+  filterLocations: filterLocations,
+  searchLocations: searchLocations
 };
 
 /***/ })

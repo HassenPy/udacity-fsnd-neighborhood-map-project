@@ -4,14 +4,15 @@ import {gmap, filters} from './models';
 import {updateMarkers, showPlace} from './service';
 import {toggleFilter, filterLocations, searchLocations} from './helpers';
 
+
 let LocationVM = function() {
   let self = this;
+
   self.locations = ko.observableArray(gmap.locations);
   self.activeLocations = ko.observableArray(gmap.locations);
 
   // Adding an initial active state to the filter.
   self.filters = ko.observableArray(
-    // ES7 object spread: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Operators/Spread_operator
     filters.map(filter => ({...filter, active: false}))
   );
   self.activeFilters = ko.observableArray();
@@ -35,7 +36,7 @@ let LocationVM = function() {
     // Get the index of the clicked filter
     const filterIndex = self.activeFilters.indexOf(filter.text);
     let currentFilter = self.activeFilters()[filterIndex] || filter;
-    currentFilter = toggleFilter(filter);
+    toggleFilter(filter);
 
     if (filterIndex === -1) {
       self.activeFilters.push(filter.text);
@@ -43,11 +44,13 @@ let LocationVM = function() {
       self.activeFilters.remove(filter.text);
     }
 
+    // set the filtered locations and update markers.
     const newLocations = filterLocations(self.locations(), self.activeFilters());
     self.activeLocations(newLocations);
-    console.log("updating markers from filter");
-    updateMarkers(self.activeLocations, gmap.markers);
+    updateMarkers(self.activeLocations);
   };
+
+  // check if a filter is active.
   self.isActive = function(text) {
     return (true
       ? self.activeFilters.indexOf(text) !== -1
@@ -59,12 +62,17 @@ let LocationVM = function() {
       const newLocations = filterLocations(self.locations(), self.activeFilters());
       self.activeLocations(newLocations);
     } else {
+      // we won't search activeLocation since its being updated with every search,
+      // so using the full filtered locations will make it able to display locations when
+      // a user is removing characters from the searchTerm, else the activeLocations list will
+      // keep shrinking until the user removes the full searchTerm keyword.
       let newLocations = filterLocations(self.locations(), self.activeFilters());
       newLocations = searchLocations(newLocations, self.searchTerm());
       self.activeLocations(newLocations);
     }
-    updateMarkers(self.activeLocations, gmap.markers);
+    updateMarkers(self.activeLocations);
   };
+
   self.showPlace = function(location) {
     const fn = showPlace.bind(location.marker);
     fn();

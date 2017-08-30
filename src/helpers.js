@@ -1,37 +1,34 @@
-const animateMarker = function(marker, gmap) {
-  marker.setAnimation(google.maps.Animation.BOUNCE);
-  gmap.map.panTo(marker.position);
-  gmap.map.setZoom(16);
-  gmap.activeMarker = marker;
-};
-const deanimateMarker = function(marker, gmap) {
-  marker.setAnimation(null);
-  gmap.map.panTo(gmap.center);
-  gmap.map.setZoom(12);
-  gmap.activeMarker = marker;
-};
+/**
+ * update the active state on a filter.
+ * @param {Object} filter - the filter to update its active state.
+ */
+const toggleFilter = (filter) => ({...filter, active: !filter.active});
 
-const toggleFilter = (filter) => ({
-  ...filter,
-  active: !filter.active
-});
-
+/**
+ * add an active state the filter.
+ * @param {Array} locations - all the locations unfiltred.
+ * @param {Array} filters - the filters to apply.
+ */
 const filterLocations = (locations, filters) => {
   if (filters.length == 0)
     return locations;
 
+  // Check if the location.filter value is present the filters array.
   const newLocations = locations.filter(location => filters.indexOf(location.filter) !== -1);
   return newLocations;
 }
 
-const searchLocations = (locations, searchTerm) => {
-  const newLocations = locations.filter(location => location.title.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1);
+/**
+ * search a string in the given locations.
+ * @param {Array} activeLocations - active locations to search.
+ * @param {String} searchTerm - text to search.
+ */
+const searchLocations = (activeLocations, searchTerm) => {
+  const newLocations = activeLocations.filter(location => location.title.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1);
   return newLocations;
 }
 
 module.exports = {
-  animateMarker: animateMarker,
-  deanimateMarker: deanimateMarker,
   toggleFilter: toggleFilter,
   filterLocations: filterLocations,
   searchLocations: searchLocations
