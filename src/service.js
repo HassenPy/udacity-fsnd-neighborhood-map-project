@@ -1,10 +1,10 @@
-import {gmap, icons} from './models';
+import {gmap, activeMarker, icons} from './models';
 import {toggleBounce} from './helpers';
 import axios from 'axios';
 let _ = require('lodash');
 
 
-const initMap = function() {
+const initDOM = function() {
   const midoun = {lat: 33.807279, lng: 10.991097};
   gmap.center = midoun;
   gmap.map = new google.maps.Map(document.getElementById('map'), {
@@ -32,14 +32,26 @@ const initMap = function() {
     });
     marker.setMap(gmap.map);
     marker.setAnimation(null);
-    marker.addListener('click', toggleBounce);
+    marker.location = location;
+    marker.addListener('click', showPlace);
     gmap.markers.push(marker);
     let newLocation = {...location, marker: marker};
     return newLocation;
   });
   gmap.places = new google.maps.places.PlacesService(gmap.map);
+
+  document.querySelector("#hidePlace").addEventListener("click", hidePlace);
 };
 
+const hidePlace = function() {
+  const placeEl = document.querySelector(".place");
+  const nav = document.querySelector("#locations");
+  const status = document.querySelector(".status");
+  placeEl.style.display = "none";
+  nav.style.display = "block";
+  status.style.display = "none";
+  toggleBounce(activeMarker, gmap);
+};
 
 const updateMarkers = function(activeLocations, markers) {
   markers.find((marker) => {
@@ -64,20 +76,42 @@ const updateMarkers = function(activeLocations, markers) {
 };
 
 
-const getPlace = function(location, context) {
-  const coords = new google.maps.LatLng(location.lat, location.lng);
-  let service = new google.maps.places.PlacesService(gmap.map);
+const showPlace = function() {
+  const self = this;
+  const coords = new google.maps.LatLng(this.location.lat, this.location.lng);
+  const service = new google.maps.places.PlacesService(gmap.map);
 
+  toggleBounce(this, gmap);
+
+  let place = {};
+  place.title = this.location.title;
+  place.lat = this.location.lat;
+  place.lng = this.location.lng;
+
+  showStatus("Please wait while we fetch location info ...");
   service.nearbySearch({
     location: coords,
-    type: [location.type],
-    keywords: location.title,
+    type: [self.location.type],
+    keywords: self.location.title,
     radius: 5,
     rankby: "distance"
   }, function(response){
+    if (!response[0]) {
+      showStatus("an error occured! make sure you're connected to the internet ...");
+      return;
+    }
     gmap.places.getDetails({
       placeId: response[0].place_id
     }, function(response){
+      if (!response.formatted_address) {
+        showStatus("an error occured! make sure you're connected to the internet ...");
+        return;
+      }
+      place.address = response.formatted_address;
+      place.types = response.types;
+      place.photo = {};
+      place.photo.url = response.photos[0].getUrl({maxWidth: 500});
+      place.photo.attribution = response.photos[0].html_attributions[0];
       axios.get('https://en.wikipedia.org/w/api.php', {
         params: {
           origin: '*',
@@ -90,53 +124,71 @@ const getPlace = function(location, context) {
         }
       })
         .then(function(wikiResponse){
+          place.summary = {};
           if (wikiResponse.data.query.pages['-1']) {
-            response.summary = null;
-            response.wikiLink = '';
-            response.wikiText = '';
+            place.summary.text = null;
+            place.summary.attribution = '';
           } else {
             const pages = wikiResponse.data.query.pages;
             const page = pages[Object.keys(pages)[0]];
-            response.summary = page.extract;
-            response.wikiLink = 'https://en.wikipedia.org/?curid=' + page.pageid;
-            response.wikiText = 'more on wikipedia';
+            place.summary.text = page.extract;
+            place.summary.attribution = 'https://en.wikipedia.org/?curid=' + page.pageid;
           }
-
-          let coords = {};
-          coords.lat = _.round(response.geometry.location.lat(), 6);
-          coords.lng = _.round(response.geometry.location.lng(), 6);
-          response.coords = coords;
-
-          context.locationProfile(response);
-          context.requestStatus('');
+          renderPlace(place);
         })
       .catch(function(response){
-        context.requestStatus('an error has occured while fetching the location info!');
+        showStatus("an error occured! make sure you're connected to the internet ...");
       });
     });
   });
 };
 
 
-const zoomMarker = function(lat, lng, marker) {
-  const latLng = new google.maps.LatLng(lat, lng);
-  const clickEvent = toggleBounce.bind(marker);
-  clickEvent();
-  gmap.map.setZoom(17);
-  gmap.map.panTo(latLng);
-}
-const resetZoom = function(marker) {
-  const clickEvent = toggleBounce.bind(marker);
-  clickEvent();
-  gmap.map.setZoom(12);
-  gmap.map.panTo(gmap.center);
+const showStatus = function(message) {
+  const el = document.querySelector(".status");
+  const locations = document.querySelector("#locations");
+  el.style.display = "block";
+  el.innerText = message;
+  locations.style.display = "none";
+};
 
-}
+const renderPlace = function(place) {
+  const placeEl = document.querySelector(".place");
+  const nav = document.querySelector(".map-nav");
+  const status = document.querySelector(".status");
+  const btnShow = document.querySelector(".show");
+  status.style.display = "none";
+  placeEl.style.display = "block";
+  nav.style.display = "block";
+  btnShow.style.display = "none";
+
+  placeEl.querySelector(".place-title").innerText = place.title;
+  placeEl.querySelector(".place-address").innerText = place.address;
+  placeEl.querySelector(".place-picture").src = place.photo.url;
+  placeEl.querySelector(".place-picture__attribution").href = place.photo.attribution;
+
+  let el = document.createElement("span");
+  el.innerText = place.lat + ', ' + place.lng;
+  placeEl.querySelector(".place-coords").innerHTML = "";
+  placeEl.querySelector(".place-coords").appendChild(el);
+
+  placeEl.querySelector(".place-types").innerHTML = "";
+  place.types.forEach((type) => {
+    let el = document.createElement("span");
+    el.innerText = type;
+    placeEl.querySelector(".place-types").appendChild(el);
+  });
+  if (place.summary.text) {
+    placeEl.querySelector(".place-summary").style.display = "block";
+    placeEl.querySelector(".place-summary p").innerHTML = place.summary.text;
+    placeEl.querySelector(".place-summary__attribution").href = place.summary.attribution;
+  } else {
+    placeEl.querySelector(".place-summary").style.display = "none";
+  }
+};
 
 module.exports = {
-  initMap: initMap,
+  initDOM: initDOM,
   updateMarkers: updateMarkers,
-  getPlace: getPlace,
-  zoomMarker: zoomMarker,
-  resetZoom: resetZoom
+  showPlace: showPlace
 };

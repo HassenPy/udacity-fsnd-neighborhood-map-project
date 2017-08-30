@@ -1,15 +1,12 @@
 import ko from "knockout";
 
 import {gmap, filters} from './models';
-import {getPlace, updateMarkers, zoomMarker, resetZoom} from './service';
+import {updateMarkers, showPlace} from './service';
 import {toggleFilter, filterLocations, searchLocations} from './helpers';
 
 
 let LocationVM = function() {
   let self = this;
-
-  self.menuVisible = ko.observable(false);
-
   self.locations = ko.observableArray(gmap.locations);
   self.activeLocations = ko.observableArray(gmap.locations);
 
@@ -21,12 +18,18 @@ let LocationVM = function() {
   self.activeFilters = ko.observableArray();
 
   self.searchTerm = ko.observable('');
-  self.locationProfile = ko.observable(false);
-  self.locationMarker = ko.observable('');
-  self.requestStatus = ko.observable('');
 
   self.toggleMenu = function(){
-    self.menuVisible(!self.menuVisible());
+    let el = document.querySelector(".map-nav");
+    let btnShow = document.querySelector(".show");
+
+    if (el.style.display == "none") {
+      el.style.display = "block";
+      btnShow.style.display = "none";
+    } else {
+      el.style.display = "none";
+      btnShow.style.display = "block";
+    };
   };
 
   self.toggleFilter = function(filter){
@@ -60,21 +63,8 @@ let LocationVM = function() {
     updateMarkers(self.activeLocations, gmap.markers);
   });
   self.showPlace = function(location) {
-    self.requestStatus("fetching location info...");
-    self.locationMarker(location.marker);
-    getPlace(location, self);
-    zoomMarker(location.lat, location.lng, location.marker);
-  };
-  self.hidePlace = function() {
-    resetZoom(self.locationMarker());
-    self.requestStatus('');
-    self.locationMarker('');
-    self.locationProfile('');
-  };
-  self.getPhoto = function () {
-    return self.locationProfile().photos[0].getUrl({
-      maxWidth: 450
-    });
+    const fn = showPlace.bind(location.marker);
+    fn();
   };
 };
 

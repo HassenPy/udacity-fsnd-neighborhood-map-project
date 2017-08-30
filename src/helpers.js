@@ -1,10 +1,12 @@
-const toggleBounce = function() {
-  console.log(this);
-  if (this.getAnimation() !== null) {
-    this.setAnimation(null);
+const toggleBounce = function(marker, gmap) {
+  if (gmap.activeMarker) gmap.activeMarker.setAnimation(null);
+
+  if (marker.getAnimation() !== null) {
+    marker.setAnimation(null);
   } else {
-    this.setAnimation(google.maps.Animation.BOUNCE);
+    marker.setAnimation(google.maps.Animation.BOUNCE);
   }
+  gmap.activeMarker = marker;
 };
 
 const toggleFilter = (filter) => ({...filter, active: !filter.active});

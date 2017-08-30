@@ -8,8 +8,8 @@
   </head>
 <body>
   <main aria="main">
-    <button class="button show" data-bind="click: $root.toggleMenu, visible: !menuVisible()">show menu</button>
-    <aside class="map-nav" data-bind="visible: menuVisible()">
+    <button class="button show" data-bind="click: $root.toggleMenu">show menu</button>
+    <aside class="map-nav" style="display: none;">
       <!-- element that holds the locations and filtering -->
       <header class="map-filters">
         <button class="button hide" data-bind="click: $root.toggleMenu">hide menu</button>
@@ -28,35 +28,33 @@
 
       </header>
 
-      <section data-bind="visible: !locationProfile() && !requestStatus()">
+      <section id="locations">
         <nav class="map-locations">
           <header><h1>Places to go</h1></header>
           <ul class="locations" data-bind="foreach: activeLocations">
-            <li data-bind="css: filter"><span data-bind="text: title, click: $parent.showPlace" class="title"></span></li>
+            <li data-bind="css: filter, click: $parent.showPlace">
+              <span data-bind="text: title" class="title"></span>
+            </li>
           </ul>
         </nav>
       </section>
 
-      <section data-bind="visible: requestStatus()" class="place">
-        <button class="button back" data-bind="click: $root.hidePlace">back to list</button>
-        <p data-bind="text: requestStatus()" class="status"></p>
-      </section>
+      <p class="status"></p>
 
-      <article class="place" data-bind="visible: locationProfile(), with: locationProfile()">
-        <button class="button back" data-bind="click: $root.hidePlace">back to list</button>
-        <header class="place-title"><h1 data-bind="text: name"></h1></header>
-        <div class="place-address" data-bind="text: formatted_address"></div>
-        <img class="place-picture" data-bind="attr: {src: $parent.getPhoto() }" alt="">
-        <div class="place-types" data-bind="foreach: types">
-          <span data-bind="text: $data"></span>
+      <article class="place" id="placeModal">
+        <button class="button back" id="hidePlace">X</button>
+        <header><h1 class="place-title"></h1></header>
+        <div class="place-address"></div>
+        <a class="place-picture__attribution" href="#">
+          <img class="place-picture" alt="">
+        </a>
+        <div class="place-types">
         </div>
         <div class="place-coords">
-          <span data-bind="text: coords.lat"></span>,
-          <span data-bind="text: coords.lng"></span>
         </div>
         <div class="place-summary">
-          <p data-bind="html: summary"></p>
-          <a data-bind="attr:{href: wikiLink}, text: wikiText" target="_blank"></a>
+          <p></p>
+          <a class="place-summary__attribution" href="#" target="_blank">more on wikipedia</a>
         </div>
       </article>
     </aside>

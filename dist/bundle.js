@@ -6308,6 +6308,7 @@ var icon_base = '/dist/assets/icons/';
 var gmap = {
   map: null,
   markers: [],
+  activeMarker: null,
   locations: [{
     lat: 33.808605,
     lng: 10.990073,
@@ -6423,7 +6424,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var _ = __webpack_require__(34);
 
-var initMap = function initMap() {
+var initDOM = function initDOM() {
   var midoun = { lat: 33.807279, lng: 10.991097 };
   _models.gmap.center = midoun;
   _models.gmap.map = new google.maps.Map(document.getElementById('map'), {
@@ -6451,12 +6452,25 @@ var initMap = function initMap() {
     });
     marker.setMap(_models.gmap.map);
     marker.setAnimation(null);
-    marker.addListener('click', _helpers.toggleBounce);
+    marker.location = location;
+    marker.addListener('click', showPlace);
     _models.gmap.markers.push(marker);
     var newLocation = _extends({}, location, { marker: marker });
     return newLocation;
   });
   _models.gmap.places = new google.maps.places.PlacesService(_models.gmap.map);
+
+  document.querySelector("#hidePlace").addEventListener("click", hidePlace);
+};
+
+var hidePlace = function hidePlace() {
+  var placeEl = document.querySelector(".place");
+  var nav = document.querySelector("#locations");
+  var status = document.querySelector(".status");
+  placeEl.style.display = "none";
+  nav.style.display = "block";
+  status.style.display = "none";
+  (0, _helpers.toggleBounce)(_models.activeMarker, _models.gmap);
 };
 
 var updateMarkers = function updateMarkers(activeLocations, markers) {
@@ -6481,20 +6495,42 @@ var updateMarkers = function updateMarkers(activeLocations, markers) {
   });
 };
 
-var getPlace = function getPlace(location, context) {
-  var coords = new google.maps.LatLng(location.lat, location.lng);
+var showPlace = function showPlace() {
+  var self = this;
+  var coords = new google.maps.LatLng(this.location.lat, this.location.lng);
   var service = new google.maps.places.PlacesService(_models.gmap.map);
 
+  (0, _helpers.toggleBounce)(this, _models.gmap);
+
+  var place = {};
+  place.title = this.location.title;
+  place.lat = this.location.lat;
+  place.lng = this.location.lng;
+
+  showStatus("Please wait while we fetch location info ...");
   service.nearbySearch({
     location: coords,
-    type: [location.type],
-    keywords: location.title,
+    type: [self.location.type],
+    keywords: self.location.title,
     radius: 5,
     rankby: "distance"
   }, function (response) {
+    if (!response[0]) {
+      showStatus("an error occured! make sure you're connected to the internet ...");
+      return;
+    }
     _models.gmap.places.getDetails({
       placeId: response[0].place_id
     }, function (response) {
+      if (!response.formatted_address) {
+        showStatus("an error occured! make sure you're connected to the internet ...");
+        return;
+      }
+      place.address = response.formatted_address;
+      place.types = response.types;
+      place.photo = {};
+      place.photo.url = response.photos[0].getUrl({ maxWidth: 500 });
+      place.photo.attribution = response.photos[0].html_attributions[0];
       _axios2.default.get('https://en.wikipedia.org/w/api.php', {
         params: {
           origin: '*',
@@ -6506,52 +6542,71 @@ var getPlace = function getPlace(location, context) {
           format: 'json'
         }
       }).then(function (wikiResponse) {
+        place.summary = {};
         if (wikiResponse.data.query.pages['-1']) {
-          response.summary = null;
-          response.wikiLink = '';
-          response.wikiText = '';
+          place.summary.text = null;
+          place.summary.attribution = '';
         } else {
           var pages = wikiResponse.data.query.pages;
           var page = pages[Object.keys(pages)[0]];
-          response.summary = page.extract;
-          response.wikiLink = 'https://en.wikipedia.org/?curid=' + page.pageid;
-          response.wikiText = 'more on wikipedia';
+          place.summary.text = page.extract;
+          place.summary.attribution = 'https://en.wikipedia.org/?curid=' + page.pageid;
         }
-
-        var coords = {};
-        coords.lat = _.round(response.geometry.location.lat(), 6);
-        coords.lng = _.round(response.geometry.location.lng(), 6);
-        response.coords = coords;
-
-        context.locationProfile(response);
-        context.requestStatus('');
+        renderPlace(place);
       }).catch(function (response) {
-        context.requestStatus('an error has occured while fetching the location info!');
+        showStatus("an error occured! make sure you're connected to the internet ...");
       });
     });
   });
 };
 
-var zoomMarker = function zoomMarker(lat, lng, marker) {
-  var latLng = new google.maps.LatLng(lat, lng);
-  var clickEvent = _helpers.toggleBounce.bind(marker);
-  clickEvent();
-  _models.gmap.map.setZoom(17);
-  _models.gmap.map.panTo(latLng);
+var showStatus = function showStatus(message) {
+  var el = document.querySelector(".status");
+  var locations = document.querySelector("#locations");
+  el.style.display = "block";
+  el.innerText = message;
+  locations.style.display = "none";
 };
-var resetZoom = function resetZoom(marker) {
-  var clickEvent = _helpers.toggleBounce.bind(marker);
-  clickEvent();
-  _models.gmap.map.setZoom(12);
-  _models.gmap.map.panTo(_models.gmap.center);
+
+var renderPlace = function renderPlace(place) {
+  var placeEl = document.querySelector(".place");
+  var nav = document.querySelector(".map-nav");
+  var status = document.querySelector(".status");
+  var btnShow = document.querySelector(".show");
+  status.style.display = "none";
+  placeEl.style.display = "block";
+  nav.style.display = "block";
+  btnShow.style.display = "none";
+
+  placeEl.querySelector(".place-title").innerText = place.title;
+  placeEl.querySelector(".place-address").innerText = place.address;
+  placeEl.querySelector(".place-picture").src = place.photo.url;
+  placeEl.querySelector(".place-picture__attribution").href = place.photo.attribution;
+
+  var el = document.createElement("span");
+  el.innerText = place.lat + ', ' + place.lng;
+  placeEl.querySelector(".place-coords").innerHTML = "";
+  placeEl.querySelector(".place-coords").appendChild(el);
+
+  placeEl.querySelector(".place-types").innerHTML = "";
+  place.types.forEach(function (type) {
+    var el = document.createElement("span");
+    el.innerText = type;
+    placeEl.querySelector(".place-types").appendChild(el);
+  });
+  if (place.summary.text) {
+    placeEl.querySelector(".place-summary").style.display = "block";
+    placeEl.querySelector(".place-summary p").innerHTML = place.summary.text;
+    placeEl.querySelector(".place-summary__attribution").href = place.summary.attribution;
+  } else {
+    placeEl.querySelector(".place-summary").style.display = "none";
+  }
 };
 
 module.exports = {
-  initMap: initMap,
+  initDOM: initDOM,
   updateMarkers: updateMarkers,
-  getPlace: getPlace,
-  zoomMarker: zoomMarker,
-  resetZoom: resetZoom
+  showPlace: showPlace
 };
 
 /***/ }),
@@ -6563,13 +6618,15 @@ module.exports = {
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-var toggleBounce = function toggleBounce() {
-  console.log(this);
-  if (this.getAnimation() !== null) {
-    this.setAnimation(null);
+var toggleBounce = function toggleBounce(marker, gmap) {
+  if (gmap.activeMarker) gmap.activeMarker.setAnimation(null);
+
+  if (marker.getAnimation() !== null) {
+    marker.setAnimation(null);
   } else {
-    this.setAnimation(google.maps.Animation.BOUNCE);
+    marker.setAnimation(google.maps.Animation.BOUNCE);
   }
+  gmap.activeMarker = marker;
 };
 
 var toggleFilter = function toggleFilter(filter) {
@@ -7077,7 +7134,7 @@ var _service = __webpack_require__(4);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-(0, _service.initMap)();
+(0, _service.initDOM)();
 
 _knockout2.default.options.useOnlyNativeEvents = true;
 _knockout2.default.applyBindings(new _viewmodels.LocationVM());
@@ -7105,9 +7162,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var LocationVM = function LocationVM() {
   var self = this;
-
-  self.menuVisible = _knockout2.default.observable(false);
-
   self.locations = _knockout2.default.observableArray(_models.gmap.locations);
   self.activeLocations = _knockout2.default.observableArray(_models.gmap.locations);
 
@@ -7120,12 +7174,18 @@ var LocationVM = function LocationVM() {
   self.activeFilters = _knockout2.default.observableArray();
 
   self.searchTerm = _knockout2.default.observable('');
-  self.locationProfile = _knockout2.default.observable(false);
-  self.locationMarker = _knockout2.default.observable('');
-  self.requestStatus = _knockout2.default.observable('');
 
   self.toggleMenu = function () {
-    self.menuVisible(!self.menuVisible());
+    var el = document.querySelector(".map-nav");
+    var btnShow = document.querySelector(".show");
+
+    if (el.style.display == "none") {
+      el.style.display = "block";
+      btnShow.style.display = "none";
+    } else {
+      el.style.display = "none";
+      btnShow.style.display = "block";
+    };
   };
 
   self.toggleFilter = function (filter) {
@@ -7159,21 +7219,8 @@ var LocationVM = function LocationVM() {
     (0, _service.updateMarkers)(self.activeLocations, _models.gmap.markers);
   });
   self.showPlace = function (location) {
-    self.requestStatus("fetching location info...");
-    self.locationMarker(location.marker);
-    (0, _service.getPlace)(location, self);
-    (0, _service.zoomMarker)(location.lat, location.lng, location.marker);
-  };
-  self.hidePlace = function () {
-    (0, _service.resetZoom)(self.locationMarker());
-    self.requestStatus('');
-    self.locationMarker('');
-    self.locationProfile('');
-  };
-  self.getPhoto = function () {
-    return self.locationProfile().photos[0].getUrl({
-      maxWidth: 450
-    });
+    var fn = _service.showPlace.bind(location.marker);
+    fn();
   };
 };
 

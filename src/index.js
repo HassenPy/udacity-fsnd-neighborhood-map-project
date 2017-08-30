@@ -1,9 +1,9 @@
 import ko from "knockout";
 
 import {LocationVM} from "./viewmodels";
-import {initMap} from "./service";
+import {initDOM} from "./service";
 
-initMap();
+initDOM();
 
 ko.options.useOnlyNativeEvents = true;
 ko.applyBindings(new LocationVM());
