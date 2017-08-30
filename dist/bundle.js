@@ -6420,12 +6420,12 @@ var _axios = __webpack_require__(15);
 
 var _axios2 = _interopRequireDefault(_axios);
 
+var _lodash = __webpack_require__(34);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var _ = __webpack_require__(34);
-
 var initDOM = function initDOM() {
-  var midoun = { lat: 33.807279, lng: 10.991097 };
+  var midoun = new google.maps.LatLng(33.807279, 10.991097);
   _models.gmap.center = midoun;
   _models.gmap.map = new google.maps.Map(document.getElementById('map'), {
     zoom: 12,
@@ -6446,16 +6446,18 @@ var initDOM = function initDOM() {
       anchor: new google.maps.Point(17, 34),
       scaledSize: new google.maps.Size(25, 25)
     };
-    var marker = new google.maps.Marker({
-      position: latLng,
-      icon: icon
-    });
+
+    var marker = new google.maps.Marker({ position: latLng, icon: icon });
     marker.setMap(_models.gmap.map);
     marker.setAnimation(null);
     marker.location = location;
     marker.addListener('click', showPlace);
+    marker.latLng = latLng;
     _models.gmap.markers.push(marker);
-    var newLocation = _extends({}, location, { marker: marker });
+
+    var newLocation = _extends({}, location, {
+      marker: marker
+    });
     return newLocation;
   });
   _models.gmap.places = new google.maps.places.PlacesService(_models.gmap.map);
@@ -6470,27 +6472,27 @@ var hidePlace = function hidePlace() {
   placeEl.style.display = "none";
   nav.style.display = "block";
   status.style.display = "none";
-  (0, _helpers.toggleBounce)(_models.activeMarker, _models.gmap);
+  (0, _helpers.deanimateMarker)(_models.gmap.activeMarker, _models.gmap);
 };
 
 var updateMarkers = function updateMarkers(activeLocations, markers) {
-  markers.find(function (marker) {
-    var found = false;
-    activeLocations().find(function (location) {
+  var found = false;
+  markers.forEach(function (marker) {
+    found = activeLocations().find(function (location) {
       // Find if location coords are equal to the marker coords.
-      if (_.round(marker.position.lat(), 6) === location.lat && _.round(marker.position.lng(), 6) === location.lng) {
-        found = true;
-        return;
+      if ((0, _lodash.round)(marker.position.lat(), 6) === location.lat && (0, _lodash.round)(marker.position.lng(), 6) === location.lng) {
+        return true;
       }
     });
 
-    var newMarker = null;
     if (!found) {
-      newMarker = marker.setMap(null);
-      return;
+      if (marker === _models.gmap.activeMarker) {
+        hidePlace();
+      }
+      marker.setMap(null);
     } else {
-      newMarker = marker.setMap(_models.gmap.map);
-      return;
+      if (marker === _models.gmap.activeMarker) return;
+      marker.setMap(_models.gmap.map);
     }
   });
 };
@@ -6500,7 +6502,7 @@ var showPlace = function showPlace() {
   var coords = new google.maps.LatLng(this.location.lat, this.location.lng);
   var service = new google.maps.places.PlacesService(_models.gmap.map);
 
-  (0, _helpers.toggleBounce)(this, _models.gmap);
+  (0, _helpers.animateMarker)(this, _models.gmap);
 
   var place = {};
   place.title = this.location.title;
@@ -6561,22 +6563,22 @@ var showPlace = function showPlace() {
 };
 
 var showStatus = function showStatus(message) {
+  var nav = document.querySelector(".map-nav");
   var el = document.querySelector(".status");
   var locations = document.querySelector("#locations");
+  var btnShow = document.querySelector(".show");
   el.style.display = "block";
   el.innerText = message;
   locations.style.display = "none";
+  nav.style.display = "block";
+  btnShow.style.display = "none";
 };
 
 var renderPlace = function renderPlace(place) {
   var placeEl = document.querySelector(".place");
-  var nav = document.querySelector(".map-nav");
   var status = document.querySelector(".status");
-  var btnShow = document.querySelector(".show");
   status.style.display = "none";
   placeEl.style.display = "block";
-  nav.style.display = "block";
-  btnShow.style.display = "none";
 
   placeEl.querySelector(".place-title").innerText = place.title;
   placeEl.querySelector(".place-address").innerText = place.address;
@@ -6618,19 +6620,23 @@ module.exports = {
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-var toggleBounce = function toggleBounce(marker, gmap) {
-  if (gmap.activeMarker) gmap.activeMarker.setAnimation(null);
-
-  if (marker.getAnimation() !== null) {
-    marker.setAnimation(null);
-  } else {
-    marker.setAnimation(google.maps.Animation.BOUNCE);
-  }
+var animateMarker = function animateMarker(marker, gmap) {
+  marker.setAnimation(google.maps.Animation.BOUNCE);
+  gmap.map.panTo(marker.position);
+  gmap.map.setZoom(16);
+  gmap.activeMarker = marker;
+};
+var deanimateMarker = function deanimateMarker(marker, gmap) {
+  marker.setAnimation(null);
+  gmap.map.panTo(gmap.center);
+  gmap.map.setZoom(12);
   gmap.activeMarker = marker;
 };
 
 var toggleFilter = function toggleFilter(filter) {
-  return _extends({}, filter, { active: !filter.active });
+  return _extends({}, filter, {
+    active: !filter.active
+  });
 };
 
 var filterLocations = function filterLocations(locations, filters) {
@@ -6650,7 +6656,8 @@ var searchLocations = function searchLocations(locations, searchTerm) {
 };
 
 module.exports = {
-  toggleBounce: toggleBounce,
+  animateMarker: animateMarker,
+  deanimateMarker: deanimateMarker,
   toggleFilter: toggleFilter,
   filterLocations: filterLocations,
   searchLocations: searchLocations
@@ -7165,7 +7172,7 @@ var LocationVM = function LocationVM() {
   self.locations = _knockout2.default.observableArray(_models.gmap.locations);
   self.activeLocations = _knockout2.default.observableArray(_models.gmap.locations);
 
-  // Adding an active state value to the filter, its only used by the view and VM.
+  // Adding an initial active state to the filter.
   self.filters = _knockout2.default.observableArray(
   // ES7 object spread: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Operators/Spread_operator
   _models.filters.map(function (filter) {
@@ -7202,22 +7209,26 @@ var LocationVM = function LocationVM() {
 
     var newLocations = (0, _helpers.filterLocations)(self.locations(), self.activeFilters());
     self.activeLocations(newLocations);
+    console.log("updating markers from filter");
     (0, _service.updateMarkers)(self.activeLocations, _models.gmap.markers);
   };
   self.isActive = function (text) {
     return true ? self.activeFilters.indexOf(text) !== -1 : false;
   };
 
-  self.search = _knockout2.default.computed(function () {
+  self.search = function () {
+    console.log(self.searchTerm().length);
     if (self.searchTerm().length === 0) {
       var newLocations = (0, _helpers.filterLocations)(self.locations(), self.activeFilters());
       self.activeLocations(newLocations);
     } else {
-      var _newLocations = (0, _helpers.searchLocations)(self.activeLocations(), self.searchTerm());
+      var _newLocations = (0, _helpers.filterLocations)(self.locations(), self.activeFilters());
+      _newLocations = (0, _helpers.searchLocations)(_newLocations, self.searchTerm());
       self.activeLocations(_newLocations);
     }
+    console.log("updating markers from search");
     (0, _service.updateMarkers)(self.activeLocations, _models.gmap.markers);
-  });
+  };
   self.showPlace = function (location) {
     var fn = _service.showPlace.bind(location.marker);
     fn();

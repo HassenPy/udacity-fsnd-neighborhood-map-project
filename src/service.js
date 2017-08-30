@@ -1,20 +1,19 @@
-import {gmap, activeMarker, icons} from './models';
-import {toggleBounce} from './helpers';
+import {gmap, icons} from './models';
+import {animateMarker, deanimateMarker} from './helpers';
 import axios from 'axios';
-let _ = require('lodash');
-
+import { round } from 'lodash';
 
 const initDOM = function() {
-  const midoun = {lat: 33.807279, lng: 10.991097};
+  const midoun = new google.maps.LatLng(33.807279, 10.991097);
   gmap.center = midoun;
   gmap.map = new google.maps.Map(document.getElementById('map'), {
     zoom: 12,
     center: midoun,
     mapTypeId: 'satellite',
     mapTypeControlOptions: {
-        style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
-        position: google.maps.ControlPosition.TOP_CENTER
-    },
+      style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+      position: google.maps.ControlPosition.TOP_CENTER
+    }
   });
 
   gmap.locations = gmap.locations.map((location) => {
@@ -26,16 +25,19 @@ const initDOM = function() {
       anchor: new google.maps.Point(17, 34),
       scaledSize: new google.maps.Size(25, 25)
     };
-    let marker = new google.maps.Marker({
-      position: latLng,
-      icon: icon
-    });
+
+    let marker = new google.maps.Marker({position: latLng, icon: icon});
     marker.setMap(gmap.map);
     marker.setAnimation(null);
     marker.location = location;
     marker.addListener('click', showPlace);
+    marker.latLng = latLng;
     gmap.markers.push(marker);
-    let newLocation = {...location, marker: marker};
+
+    let newLocation = {
+      ...location,
+      marker: marker
+    };
     return newLocation;
   });
   gmap.places = new google.maps.places.PlacesService(gmap.map);
@@ -50,38 +52,38 @@ const hidePlace = function() {
   placeEl.style.display = "none";
   nav.style.display = "block";
   status.style.display = "none";
-  toggleBounce(activeMarker, gmap);
+  deanimateMarker(gmap.activeMarker, gmap);
 };
 
 const updateMarkers = function(activeLocations, markers) {
-  markers.find((marker) => {
-    let found = false;
-    activeLocations().find((location) => {
+  let found = false;
+  markers.forEach((marker) => {
+    found = activeLocations().find((location) => {
       // Find if location coords are equal to the marker coords.
-      if (_.round(marker.position.lat(), 6) === location.lat && _.round(marker.position.lng(), 6) === location.lng){
-        found = true;
-        return;
+      if (round(marker.position.lat(), 6) === location.lat && round(marker.position.lng(), 6) === location.lng) {
+        return true;
       }
     });
 
-    let newMarker = null;
     if (!found) {
-      newMarker = marker.setMap(null);
-      return;
+      if (marker === gmap.activeMarker) {
+        hidePlace();
+      }
+      marker.setMap(null);
     } else {
-      newMarker = marker.setMap(gmap.map);
-      return;
+      if (marker === gmap.activeMarker)
+        return;
+      marker.setMap(gmap.map);
     }
   });
 };
-
 
 const showPlace = function() {
   const self = this;
   const coords = new google.maps.LatLng(this.location.lat, this.location.lng);
   const service = new google.maps.places.PlacesService(gmap.map);
 
-  toggleBounce(this, gmap);
+  animateMarker(this, gmap);
 
   let place = {};
   place.title = this.location.title;
@@ -95,14 +97,14 @@ const showPlace = function() {
     keywords: self.location.title,
     radius: 5,
     rankby: "distance"
-  }, function(response){
+  }, function(response) {
     if (!response[0]) {
       showStatus("an error occured! make sure you're connected to the internet ...");
       return;
     }
     gmap.places.getDetails({
       placeId: response[0].place_id
-    }, function(response){
+    }, function(response) {
       if (!response.formatted_address) {
         showStatus("an error occured! make sure you're connected to the internet ...");
         return;
@@ -122,45 +124,42 @@ const showPlace = function() {
           exintro: 'explaintext',
           format: 'json'
         }
-      })
-        .then(function(wikiResponse){
-          place.summary = {};
-          if (wikiResponse.data.query.pages['-1']) {
-            place.summary.text = null;
-            place.summary.attribution = '';
-          } else {
-            const pages = wikiResponse.data.query.pages;
-            const page = pages[Object.keys(pages)[0]];
-            place.summary.text = page.extract;
-            place.summary.attribution = 'https://en.wikipedia.org/?curid=' + page.pageid;
-          }
-          renderPlace(place);
-        })
-      .catch(function(response){
+      }).then(function(wikiResponse) {
+        place.summary = {};
+        if (wikiResponse.data.query.pages['-1']) {
+          place.summary.text = null;
+          place.summary.attribution = '';
+        } else {
+          const pages = wikiResponse.data.query.pages;
+          const page = pages[Object.keys(pages)[0]];
+          place.summary.text = page.extract;
+          place.summary.attribution = 'https://en.wikipedia.org/?curid=' + page.pageid;
+        }
+        renderPlace(place);
+      }).catch(function(response) {
         showStatus("an error occured! make sure you're connected to the internet ...");
       });
     });
   });
 };
 
-
 const showStatus = function(message) {
+  const nav = document.querySelector(".map-nav");
   const el = document.querySelector(".status");
   const locations = document.querySelector("#locations");
+  const btnShow = document.querySelector(".show");
   el.style.display = "block";
   el.innerText = message;
   locations.style.display = "none";
+  nav.style.display = "block";
+  btnShow.style.display = "none";
 };
 
 const renderPlace = function(place) {
   const placeEl = document.querySelector(".place");
-  const nav = document.querySelector(".map-nav");
   const status = document.querySelector(".status");
-  const btnShow = document.querySelector(".show");
   status.style.display = "none";
   placeEl.style.display = "block";
-  nav.style.display = "block";
-  btnShow.style.display = "none";
 
   placeEl.querySelector(".place-title").innerText = place.title;
   placeEl.querySelector(".place-address").innerText = place.address;

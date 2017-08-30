@@ -13,64 +13,55 @@ let gmap = {
       title: 'Pizza A L\'italienne بيتزا الذوق الرفيع',
       type: 'restaurant',
       filter: 'restaurant'
-    },
-    {
+    }, {
       lat: 33.784321,
       lng: 11.057903,
       title: 'Essaguia beach',
       type: 'point_of_interest',
       filter: 'beach'
-    },
-    {
+    }, {
       lat: 33.724279,
       lng: 10.975052,
       title: 'Ras el Kastil (Kastil stronghold)',
       type: 'monument',
       filter: 'monument'
-    },
-    {
+    }, {
       lat: 33.879801,
       lng: 10.862366,
       title: 'Djerbian cultural heritage museum',
       type: 'museum',
       filter: 'museum'
-    },
-    {
+    }, {
       lat: 33.880294,
       lng: 10.856733,
       title: 'Pappagallo italian restaurant',
       type: 'restaurant',
       filter: 'restaurant'
-    },
-    {
+    }, {
       lat: 33.814457,
       lng: 11.054762,
       title: 'Yéti beach',
       type: 'point_of_interest',
       filter: 'beach'
-    },
-    {
+    }, {
       lat: 33.732550,
       lng: 10.865716,
       title: 'Guellala Museum',
       type: 'museum',
       filter: 'museum'
-    },
-    {
+    }, {
       lat: 33.632006,
       lng: 10.909170,
       title: 'Borj El Akrab',
       type: 'monument',
       filter: 'monument'
-    },
-    {
+    }, {
       lat: 33.819763,
       lng: 11.045033,
       title: 'Lalla Hadria Museum',
       type: 'museum',
       filter: 'museum'
-    },
-    {
+    }, {
       lat: 33.821267,
       lng: 10.854319,
       title: 'Djerbahood',
@@ -92,18 +83,15 @@ const filters = [
     icon: icons.beach,
     text: 'beach',
     types: ['beach']
-  },
-  {
+  }, {
     icon: icons.restaurant,
     text: 'restaurant',
     types: ['restaurant']
-  },
-  {
+  }, {
     icon: icons.monument,
     text: 'monument',
     types: ['Fortress', 'monument']
-  },
-  {
+  }, {
     icon: icons.museum,
     text: 'museum',
     types: ['museum', 'point_of_interest']
