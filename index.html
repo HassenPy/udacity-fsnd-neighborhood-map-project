@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Getting Started</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="/dist/assets/css/reset.css">
-    <link rel="stylesheet" href="/dist/assets/css/main.css">
-  </head>
+
+<head>
+  <title>Getting Started</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dist/assets/css/reset.css">
+  <link rel="stylesheet" href="/dist/assets/css/main.css">
+</head>
+
 <body>
   <main aria="main">
     <button class="button show" data-bind="click: $root.toggleMenu">show menu</button>
@@ -13,12 +15,12 @@
       <!-- element that holds the locations and filtering -->
       <header class="map-filters">
         <button class="button hide" data-bind="click: $root.toggleMenu">hide menu</button>
-        <input type="text" data-bind="value: searchTerm, valueUpdate: 'afterkeydown'" value="search locations" class="search" id="search">
+        <input type="text" data-bind="textInput: searchTerm, event: {keyup: $root.search}" value="search locations" class="search" id="search">
 
         <h2 class="filters-header">Filters</h2>
 
         <div data-bind="foreach: filters">
-          <button class="filter" data-bind="click: $parent.toggleFilter, css: {active: $parent.isActive(text)}">
+          <button class="filter" data-bind="click: $root.toggleFilter, css: {active: $root.isActive(text)}">
             <div class="img-wrapper">
               <img data-bind="attr: {src: icon, alt: text}">
             </div>
@@ -30,9 +32,10 @@
 
       <section id="locations">
         <nav class="map-locations">
-          <header><h1>Places to go</h1></header>
+          <header>
+            <h1>Places to go</h1></header>
           <ul class="locations" data-bind="foreach: activeLocations">
-            <li data-bind="css: filter, click: $parent.showPlace">
+            <li data-bind="css: filter, click: $root.showPlace">
               <span data-bind="text: title" class="title"></span>
             </li>
           </ul>
@@ -43,7 +46,8 @@
 
       <article class="place" id="placeModal">
         <button class="button back" id="hidePlace">X</button>
-        <header><h1 class="place-title"></h1></header>
+        <header>
+          <h1 class="place-title"></h1></header>
         <div class="place-address"></div>
         <a class="place-picture__attribution" href="#">
           <img class="place-picture" alt="">
@@ -64,9 +68,9 @@
     </section>
   </main>
 
-  <script type="text/javascript"
-   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9cUZngQY2Lo2IarFmTRROr5FznHuJfZ8&libraries=places">
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9cUZngQY2Lo2IarFmTRROr5FznHuJfZ8&libraries=places">
   </script>
   <script src="/dist/bundle.js"></script>
 </body>
+
 </html>
