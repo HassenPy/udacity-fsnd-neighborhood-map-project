@@ -1,6 +1,5 @@
 var gulp = require('gulp');
 var autoprefixer = require('gulp-autoprefixer');
-var eslint = require('gulp-eslint');
 var cleanCSS = require('gulp-clean-css');
 var imagemin = require('gulp-imagemin');
 var browserSync = require('browser-sync').create();
