@@ -1,5 +1,3 @@
-import ko from "knockout";
-
 const icon_base = '/dist/assets/icons/';
 
 let gmap = {

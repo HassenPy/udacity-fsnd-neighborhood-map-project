@@ -104,7 +104,6 @@ const showPlace = function() {
     }, function(response) {
       // google maps getDetails api returns an empty array when connection is lost.
       if (typeof(response) === typeof([]) && response.length === 0) {
-        console.log("lost");
         showStatus("connection lost, make sure you have a stable internet connection ...");
         return;
       }
