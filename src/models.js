@@ -1,4 +1,4 @@
-const icon_base = '/dist/assets/icons/';
+const icon_base = '/udacity-fsnd-neighborhood-map-project/dist/assets/icons/';
 
 let gmap = {
   map: null,

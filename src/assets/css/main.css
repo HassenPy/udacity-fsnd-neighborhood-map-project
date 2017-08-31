@@ -199,19 +199,19 @@ html, body, main {
 }
 
 .locations .restaurant:before {
-  background-image: url('/dist/assets/icons/lunch.svg');
+  background-image: url('/udacity-fsnd-neighborhood-map-project/dist/assets/icons/lunch.svg');
 }
 
 .locations .beach:before {
-  background-image: url('/dist/assets/icons/beach.svg');
+  background-image: url('/udacity-fsnd-neighborhood-map-project/dist/assets/icons/beach.svg');
 }
 
 .locations .museum:before {
-  background-image: url('/dist/assets/icons/museum.svg');
+  background-image: url('/udacity-fsnd-neighborhood-map-project/dist/assets/icons/museum.svg');
 }
 
 .locations .monument:before {
-  background-image: url('/dist/assets/icons/monument.svg');
+  background-image: url('/udacity-fsnd-neighborhood-map-project/dist/assets/icons/monument.svg');
 }
 
 .place {
