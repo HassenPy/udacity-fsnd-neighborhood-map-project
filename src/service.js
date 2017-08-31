@@ -1,6 +1,6 @@
-import {gmap, icons} from './models';
+import {gmap, icons, menuState, statusState, locationsListState, locationInfoState, locationInfo} from './models';
 import axios from 'axios';
-import { round } from 'lodash';
+
 
 const initDOM = function() {
   // Initialize the map with a center;
@@ -52,19 +52,17 @@ const initDOM = function() {
   });
   // replace the locations object by the newly created one which holds the marker references.
   gmap.places = new google.maps.places.PlacesService(gmap.map);
-
-  // bind a function to the button that hides the info of a location.
-  document.querySelector("#hidePlace").addEventListener("click", hidePlace);
 };
 
 const hidePlace = function() {
-  // Hide the place info and display the locations.
-  const placeEl = document.querySelector(".place");
-  const locations = document.querySelector("#locations");
-  const status = document.querySelector(".status");
-  placeEl.style.display = "none";
-  locations.style.display = "block";
-  status.style.display = "none";
+  // Hide the place info.
+  locationInfoState(false);
+  locationInfo(null);
+
+  // Display locations list.
+  locationsListState(true)
+  statusState(false);
+
   deanimateMarker(gmap.activeMarker);
 };
 
@@ -86,17 +84,17 @@ const showPlace = function() {
   place.lat = this.location.lat;
   place.lng = this.location.lng;
 
-  showStatus("Please wait while we fetch location info ...");
+  showStatus('Please wait while we fetch location info ...');
   service.nearbySearch({
     location: coords,
     type: [self.location.type],
     keywords: self.location.title,
     radius: 5,
-    rankby: "distance"
+    rankby: 'distance'
   }, function(response) {
     // google maps nearbySearch api returns an empty array when connection is lost.
     if (response.length === 0) {
-      showStatus("connection lost, make sure you have a stable internet connection ...");
+      showStatus('connection lost, make sure you have a stable internet connection ...');
       return;
     }
     gmap.places.getDetails({
@@ -104,7 +102,7 @@ const showPlace = function() {
     }, function(response) {
       // google maps getDetails api returns an empty array when connection is lost.
       if (typeof(response) === typeof([]) && response.length === 0) {
-        showStatus("connection lost, make sure you have a stable internet connection ...");
+        showStatus('connection lost, make sure you have a stable internet connection ...');
         return;
       }
       // add the received info from google maps places api to the place object.
@@ -112,7 +110,13 @@ const showPlace = function() {
       place.types = response.types;
       place.photo = {};
       place.photo.url = response.photos[0].getUrl({maxWidth: 500});
-      place.photo.attribution = response.photos[0].html_attributions[0];
+      // regext matching thanks to https://stackoverflow.com/a/17488655/4724196
+      let href = '#';
+      const attribution = response.photos[0].html_attributions[0];
+      if (attribution !== 'Photos are copyrighted by their owners') {
+        href = attribution.match(/href=([^"]*)/)[1];
+      }
+      place.photo.attribution = href;
 
       // fetch info from wikipedia, using an 'extracts' prop to get just the summary of the article.
       axios.get('https://en.wikipedia.org/w/api.php', {
@@ -141,7 +145,7 @@ const showPlace = function() {
         // render the place object.
         renderPlace(place);
       }).catch(function(response) {
-        showStatus("connection lost, make sure you have a stable internet connection ...");
+        showStatus('connection lost, make sure you have a stable internet connection ...');
       });
     });
   });
@@ -152,21 +156,13 @@ const showPlace = function() {
  * @param {string} message - message to show.
  */
 const showStatus = function(message) {
-  const nav = document.querySelector(".map-nav");
-  const el = document.querySelector(".status");
-  const locations = document.querySelector("#locations");
-  const btnShow = document.querySelector(".show");
+  statusState(message);
 
   // display the status block.
-  el.style.display = "block";
-  el.innerText = message;
-
-  // hide the locations block;
-  locations.style.display = "none";
+  locationsListState(false);
 
   // show the navigation menu in case it was already hidden.
-  nav.style.display = "block";
-  btnShow.style.display = "none";
+  menuState(true);
 };
 
 /**
@@ -174,40 +170,9 @@ const showStatus = function(message) {
  * @param {Object} place - an object that holds the place info.
  */
 const renderPlace = function(place) {
-  const placeEl = document.querySelector(".place");
-  const status = document.querySelector(".status");
-
-  // hide the status block and show the place info block;
-  status.style.display = "none";
-  placeEl.style.display = "block";
-
-  placeEl.querySelector(".place-title").innerText = place.title;
-  placeEl.querySelector(".place-address").innerText = place.address;
-  placeEl.querySelector(".place-picture").src = place.photo.url;
-  placeEl.querySelector(".place-picture__attribution").href = place.photo.attribution;
-
-  // render the coordinates
-  let el = document.createElement("span");
-  el.innerText = place.lat + ', ' + place.lng;
-  placeEl.querySelector(".place-coords").innerHTML = "";
-  placeEl.querySelector(".place-coords").appendChild(el);
-
-  // render the place types.
-  placeEl.querySelector(".place-types").innerHTML = "";
-  place.types.forEach((type) => {
-    let el = document.createElement("span");
-    el.innerText = type;
-    placeEl.querySelector(".place-types").appendChild(el);
-  });
-
-  // render the wikipedia info if its there.
-  if (place.summary.text) {
-    placeEl.querySelector(".place-summary").style.display = "block";
-    placeEl.querySelector(".place-summary p").innerHTML = place.summary.text;
-    placeEl.querySelector(".place-summary__attribution").href = place.summary.attribution;
-  } else {
-    placeEl.querySelector(".place-summary").style.display = "none";
-  }
+  locationInfoState(true);
+  statusState(false);
+  locationInfo(place);
 };
 
 
@@ -268,5 +233,6 @@ const deanimateMarker = function(marker) {
 module.exports = {
   initDOM: initDOM,
   updateMarkers: updateMarkers,
-  showPlace: showPlace
+  showPlace: showPlace,
+  hidePlace: hidePlace
 };

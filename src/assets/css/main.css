@@ -217,7 +217,6 @@ html, body, main {
 .place {
   position: relative;
 
-  display: none;
   overflow: hidden;
 
   padding: 0 1.5em;
@@ -247,8 +246,6 @@ html, body, main {
 }
 
 .place-summary {
-  display: none;
-
   margin: 1em 0;
 }
 
