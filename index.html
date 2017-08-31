@@ -3,18 +3,19 @@
 
 <head>
   <title>Getting Started</title>
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="/dist/assets/css/reset.css">
   <link rel="stylesheet" href="/dist/assets/css/main.css">
 </head>
 
 <body>
-  <main aria="main">
-    <button class="button show" data-bind="click: $root.toggleMenu">show menu</button>
-    <aside class="map-nav" style="display: none;">
+  <div aria="main">
+    <button class="button show" data-bind="visible: !menuState(), click: $root.toggleMenu">show menu</button>
+    <aside class="map-nav" data-bind="visible: menuState()">
       <!-- element that holds the locations and filtering -->
       <header class="map-filters">
-        <button class="button hide" data-bind="click: $root.toggleMenu">hide menu</button>
+        <button class="button hide" data-bind="visible: menuState(), click: $root.toggleMenu">hide menu</button>
         <input type="text" data-bind="textInput: searchTerm, event: {keyup: $root.search}" value="search locations" class="search" id="search">
 
         <h2 class="filters-header">Filters</h2>
@@ -30,7 +31,7 @@
 
       </header>
 
-      <section id="locations">
+      <section id="locations" data-bind="visible: locationsListState()">
         <nav class="map-locations">
           <header>
             <h1>Places to go</h1></header>
@@ -42,35 +43,38 @@
         </nav>
       </section>
 
-      <p class="status"></p>
-
-      <article class="place" id="placeModal">
-        <button class="button back" id="hidePlace">X</button>
+      <p class="status" data-bind="visible: statusState(), text: statusState"></p>
+      <article class="place" data-bind="visible: locationInfoState(), with: locationInfo">
+        <button class="button back" data-bind="click: $root.hidePlace">X</button>
         <header>
-          <h1 class="place-title"></h1></header>
-        <div class="place-address"></div>
-        <a class="place-picture__attribution" href="#">
-          <img class="place-picture" alt="">
+          <h1 class="place-title" data-bind="text: title"></h1>
+        </header>
+        <div class="place-address" data-bind="text: address"></div>
+        <a class="place-picture__attribution" href="#" target="_blank" data-bind="attr: {href: photo.attribution}">
+          <img class="place-picture" alt="" data-bind="attr: {src: photo.url}">
         </a>
-        <div class="place-types">
+        <div class="place-types" data-bind="foreach: types">
+          <span data-bind="text: $data"></span>
         </div>
         <div class="place-coords">
+          <span data-bind="text: lat"></span>, <span data-bind="text: lng"></span>
         </div>
         <div class="place-summary">
-          <p></p>
-          <a class="place-summary__attribution" href="#" target="_blank">more on wikipedia</a>
+          <p data-bind="html: summary.text"></p>
+          <a data-bind="visible: summary.attribution, attr: {href: summary.attribution}"
+             class="place-summary__attribution" href="#" target="_blank">more on wikipedia</a>
         </div>
       </article>
     </aside>
 
-    <section class="map">
+    <main class="map">
       <div id="map"></div>
-    </section>
-  </main>
+    </main>
+  </div>
 
-  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9cUZngQY2Lo2IarFmTRROr5FznHuJfZ8&libraries=places">
-  </script>
   <script src="/dist/bundle.js"></script>
+  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9cUZngQY2Lo2IarFmTRROr5FznHuJfZ8&libraries=places&callback=callMe" onerror="googleError()">
+  </script>
 </body>
 
 </html>

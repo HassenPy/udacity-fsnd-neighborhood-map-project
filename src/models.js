@@ -1,4 +1,13 @@
+import ko from 'knockout';
 const icon_base = '/dist/assets/icons/';
+
+let menuState = ko.observable(false);
+let statusState = ko.observable(false);
+let locationsListState = ko.observable(true);
+
+let locationInfoState = ko.observable(false);
+
+let locationInfo = ko.observable();
 
 let gmap = {
   map: null,
@@ -98,6 +107,11 @@ const filters = [
 
 module.exports = {
   gmap: gmap,
+  icons: icons,
+  menuState: menuState,
   filters: filters,
-  icons: icons
+  statusState: statusState,
+  locationsListState: locationsListState,
+  locationInfo: locationInfo,
+  locationInfoState: locationInfoState
 };
