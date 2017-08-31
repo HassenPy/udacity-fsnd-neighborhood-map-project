@@ -1,13 +1,25 @@
 import ko from "knockout";
-
-import {gmap, filters} from './models';
-import {updateMarkers, showPlace} from './service';
-import {toggleFilter, filterLocations, searchLocations} from './helpers';
-
+import {
+  gmap,
+  filters,
+  menuState,
+  statusState,
+  locationsListState,
+  locationInfoState,
+  locationInfo
+} from './models';
+import {updateMarkers, showPlace, hidePlace} from './service';
+import {toggleFilter, filterLocations, searchLocations, getMarker} from './helpers';
 
 let LocationVM = function() {
   let self = this;
 
+  self.menuState = menuState;
+  self.statusState = statusState;
+  self.locationsListState = locationsListState;
+  self.locationInfoState = locationInfoState;
+
+  self.locationInfo = locationInfo;
   self.locations = ko.observableArray(gmap.locations);
   self.activeLocations = ko.observableArray(gmap.locations);
 
@@ -20,16 +32,7 @@ let LocationVM = function() {
   self.searchTerm = ko.observable('');
 
   self.toggleMenu = function() {
-    let el = document.querySelector(".map-nav");
-    let btnShow = document.querySelector(".show");
-
-    if (el.style.display == "none") {
-      el.style.display = "block";
-      btnShow.style.display = "none";
-    } else {
-      el.style.display = "none";
-      btnShow.style.display = "block";
-    };
+    self.menuState(!self.menuState());
   };
 
   self.toggleFilter = function(filter) {
@@ -74,8 +77,14 @@ let LocationVM = function() {
   };
 
   self.showPlace = function(location) {
-    const fn = showPlace.bind(location.marker);
+    const marker = getMarker(location, gmap.markers);
+    const fn = showPlace.bind(marker);
     fn();
+  };
+  self.hidePlace = function() {
+    // not making hidePlace an explicit function for this viewmodel since its getting used
+    // by other functions outside the viewmodel.
+    hidePlace();
   };
 };
 

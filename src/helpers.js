@@ -24,12 +24,18 @@ const filterLocations = (locations, filters) => {
  * @param {String} searchTerm - text to search.
  */
 const searchLocations = (activeLocations, searchTerm) => {
-  const newLocations = activeLocations.filter(location => location.title.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1);
+  const newLocations = activeLocations.filter(location => location.title.toLowerCase().includes(searchTerm.toLowerCase()));
   return newLocations;
+}
+
+const getMarker = (location, markers) => {
+  const marker = markers.find(marker => location.title === marker.location.title);
+  return marker;
 }
 
 module.exports = {
   toggleFilter: toggleFilter,
   filterLocations: filterLocations,
-  searchLocations: searchLocations
+  searchLocations: searchLocations,
+  getMarker: getMarker
 };
